@@ -24,17 +24,17 @@ logger = logging.getLogger(__name__)
 
 
 # Global parameters
-directoryname = "./SlopeAngleRi100/"
+directoryname = "/home/jacob/dedalus/SlopeAngleRi1/"
 
 # Physical parameters
 f = 1e-4
 tht = 0
 Pr = 1
 H = 100
-Ri = 1e2
+Ri = 1e0
 Bzmag = 1e-7
-Shmag = np.sqrt(Bzmag)/Ri
-thtarr = np.linspace(-1.5, 1.5, 32)*Shmag*f/Bzmag
+Shmag = np.sqrt(Bzmag/Ri)
+thtarr = np.linspace(-1.5, 1.5, 64)*Shmag*f/Bzmag
 
 #Ri = 
 #Shmag = 1e-4
@@ -81,7 +81,7 @@ for tht in thtarr:
     problem.parameters['B'] = B
     problem.parameters['Uz'] = Uz
     problem.parameters['Vz'] = Vz
-    problem.parameters['Bz'] = Bz
+    problem.parameters['NS'] = Bz
     problem.parameters['f'] = f
     problem.parameters['tht'] = tht
     problem.parameters['kap'] = kap
@@ -97,11 +97,11 @@ for tht in thtarr:
     problem.add_equation(('dt(v) + U*dx(v) + V*dy(v) + w*Vz*cos(tht) + f*u*cos(tht)'
             '- f*w*sin(tht) + dy(p) - Pr*(kap*dx(dx(v)) + kap*dy(dy(v))'
             '+ dz(kap)*vz + kap*dz(vz)) = 0'))
-    problem.add_equation(('dt(w) + U*dx(w) + V*dy(w) + f*v*sin(tht) + dz(p)'
+    problem.add_equation(('0*(dt(w) + U*dx(w) + V*dy(w)) + f*v*sin(tht) + dz(p)'
             '- b*cos(tht) - Pr*(kap*dx(dx(w)) + kap*dy(dy(w)) + dz(kap)*wz'
             '+ kap*dz(wz)) = 0'))
-    problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*(Vz*f*cos(tht) + Bz*sin(tht))'
-                '+ w*(Bz*cos(tht) - Vz*f*sin(tht)) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
+    problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*(Vz*f*cos(tht) + NS*sin(tht))'
+                '+ w*(NS*cos(tht) - Vz*f*sin(tht)) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
                 '- kap*dz(bz) = 0'))
     #problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*Vz*f'
     #        '+ w*(Bz) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
@@ -118,6 +118,7 @@ for tht in thtarr:
     problem.add_bc('right(uz) = 0')
     problem.add_bc('right(vz) = 0')
     problem.add_bc('right(w) = 0')
+#    problem.add_bc('right(w) = 1/10*(dt(right(p)) + right(u)*dx(right(p))+right(v)*dy(right(p)))')
     problem.add_bc('right(bz) = 0')
     
     solver = problem.build_solver()
