@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 # Global parameters
-directoryname = "/home/jacob/dedalus/SlopeAngleRi1/"
+directoryname = "/home/jacob/dedalus/SlopeAngleRiVar/"
 
 # Physical parameters
 f = 1e-4
@@ -32,17 +32,20 @@ tht = 0
 Pr = 1
 H = 100
 Ri = 1
-Bzmag = 2.5e-5
-Shmag = np.sqrt(Bzmag/Ri)
-thtarr = np.linspace(-1.5, 1.5, 64)*Shmag*f/Bzmag
+Bzmag = 2.5e-5 # N = 5e-3
+tht = 5e-3
 
+Shmag = Bzmag*tht/1e-4
+#thtarr = np.linspace(-1.5, 1.5, 64)*Shmag*f/Bzmag
+
+Riv = np.linspace(0.25, 10, 48)
 #Ri = 
 #Shmag = 1e-4
 #Bzmag = (Shmag/Ro)**2 # Ro = Uz/N
 # Grid Parameters
-nz = 64#256
+nz = 128#256
 
-ly_global = np.linspace(1e-2, 30, 64)*f/(np.sqrt(Bzmag)*H)
+ly_global = np.linspace(1e-2, 6, 64)*f/(Shmag*H)
 
 # Create bases and domain
 # Use COMM_SELF so keep calculations independent between processes
@@ -61,10 +64,10 @@ Uz = domain.new_field(name='Uz')
 Uz['g'] = 0*z
 V = domain.new_field(name='V')
 Vz = domain.new_field(name='Vz')
+V['g'] = Shmag*(z)
+Vz['g'] = Shmag*(z-z+1) 
 Bz = domain.new_field(name='Bz')
 B = domain.new_field(name='B')
-V['g'] = Shmag*(z)
-Vz['g'] = Shmag*(z-z+1) #Note this assumes no horizotal variation (ie. won't work for the non-uniform case)
 Bt = np.zeros([nz])
 Bz['g'] = np.array(Bzmag*np.ones([nz]))
 Bt[1:nz] = integrate.cumtrapz(Bz['g'], z)
@@ -72,7 +75,15 @@ B['g'] = Bt
 
 # 2D Boussinesq hydrodynamics, with no-slip boundary conditions
 # Use substitutions for x and t derivatives
-for tht in thtarr:
+for Ri in Riv:
+#    Shmag = np.sqrt(Bzmag/Ri)
+#    V['g'] = Shmag*(z)
+#    Vz['g'] = Shmag*(z-z+1) #Note this assumes no horizotal variation (ie. won't work for the non-uniform case)
+    Bzmag = Ri*Shmag**2 
+    Bz['g'] = np.array(Bzmag*np.ones([nz]))
+    Bt[1:nz] = integrate.cumtrapz(Bz['g'], z)
+    B['g'] = Bt
+    
     problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
             'bz'], eigenvalue='omg', tolerance = 1e-10)
     problem.parameters['tht'] = tht
@@ -91,7 +102,7 @@ for tht in thtarr:
     problem.substitutions['dx(A)'] = "1j*k*A"
     problem.substitutions['dy(A)'] = "1j*l*A"
     problem.substitutions['dt(A)'] = "-1j*omg*A"
-    problem.add_equation(('dt(u) + U*dx(u) + V*dy(u) + w*Uz - f*v*cos(tht) + dx(p)'
+    problem.add_equation(('dt(u) + U*dx(u) + V*dy(u) + w*Uz*cos(tht) - f*v*cos(tht) + dx(p)'
             '- b*sin(tht) - Pr*(kap*dx(dx(u)) + kap*dy(dy(u)) + dz(kap)*uz'
             '+ kap*dz(uz)) = 0'))
     problem.add_equation(('dt(v) + U*dx(v) + V*dy(v) + w*Vz*cos(tht) + f*u*cos(tht)'
@@ -165,7 +176,7 @@ for tht in thtarr:
 #        plt.title('Growth Rates')
 #        plt.savefig('growth_rates_%.4f_%.1f.png' %(tht, nz))
         
-        name = 'StabilityData_'+str(tht) # Can vary this depending on parameter of interest
+        name = 'StabilityData_'+str(Ri) # Can vary this depending on parameter of interest
         np.savez(directoryname+name + '.npz', nz=nz, tht=tht, z=z, f=f, kap=kap['g'], Pr=Pr, U=U['g'],
-        V=V['g'], B=B['g'], Bz=Bz['g'], Vz=Vz['g'], H = H, ll=ly_global,
+        V=V['g'], B=B['g'], Bz=Bz['g'], Vz=Vz['g'], H = H, Ri = Ri, ll=ly_global,
         gr=growth_global)

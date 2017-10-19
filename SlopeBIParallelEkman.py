@@ -18,13 +18,17 @@ from mpi4py import MPI
 CW = MPI.COMM_WORLD
 from pylab import *
 import scipy.integrate as integrate
+import os
 
 import logging
 logger = logging.getLogger(__name__)
 
 
 # Global parameters
-directoryname = "/home/jacob/dedalus/SlopeAngleRi1/"
+directoryname = "/home/jacob/Dropbox/Slope BI/EkmanFiles/"
+directory = os.fsencode(directoryname)
+
+directorynameout = "/home/jacob/dedalus/SlopeEkman/"
 
 # Physical parameters
 f = 1e-4
@@ -32,7 +36,7 @@ tht = 0
 Pr = 1
 H = 100
 Ri = 1
-Bzmag = 2.5e-5
+Bzmag = 1.225e-5
 Shmag = np.sqrt(Bzmag/Ri)
 thtarr = np.linspace(-1.5, 1.5, 64)*Shmag*f/Bzmag
 
@@ -54,17 +58,15 @@ z = domain.grid(0)
 # Define Stability Analysis Parameters
 
 kap = domain.new_field(name='kap')
-kap['g'] = 0*np.ones(z.shape)
 U = domain.new_field(name='U')
-U['g'] = 0*z
 Uz = domain.new_field(name='Uz')
-Uz['g'] = 0*z
+#Uz['g'] = 0*z
 V = domain.new_field(name='V')
 Vz = domain.new_field(name='Vz')
 Bz = domain.new_field(name='Bz')
 B = domain.new_field(name='B')
-V['g'] = Shmag*(z)
-Vz['g'] = Shmag*(z-z+1) #Note this assumes no horizotal variation (ie. won't work for the non-uniform case)
+
+#Vz['g'] = Shmag*(z-z+1) #Note this assumes no horizotal variation (ie. won't work for the non-uniform case)
 Bt = np.zeros([nz])
 Bz['g'] = np.array(Bzmag*np.ones([nz]))
 Bt[1:nz] = integrate.cumtrapz(Bz['g'], z)
@@ -72,17 +74,32 @@ B['g'] = Bt
 
 # 2D Boussinesq hydrodynamics, with no-slip boundary conditions
 # Use substitutions for x and t derivatives
-for tht in thtarr:
+
+for file in os.listdir(directory):
+    filename = os.fsdecode(file)
+    print(filename)
+    if filename.endswith(".npz"): 
+        a = np.load(directoryname+filename);
+    
+    
     problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
             'bz'], eigenvalue='omg', tolerance = 1e-10)
-    problem.parameters['tht'] = tht
+    kap['g'] = np.interp(z,a['z'], a['kap'])
+    U['g'] = np.interp(z,a['z'], a['u'])
+    Uz  = U.differentiate(z_basis)
+    V['g'] = np.interp(z, a['z'], a['v']+a['V'])
+    Vz = V.differentiate(z_basis)
+    B['g'] = np.interp(z, a['z'], a['b'] + a['N']**2*a['z'])
+    Bz = B.differentiate(z_basis)
+    
+    problem.parameters['tht'] = a['tht']
     problem.parameters['U'] = U
     problem.parameters['V'] = V
     problem.parameters['B'] = B
     problem.parameters['Uz'] = Uz
     problem.parameters['Vz'] = Vz
     problem.parameters['NS'] = Bz
-    problem.parameters['f'] = f
+    problem.parameters['f'] = np.float(a['f'])
     problem.parameters['tht'] = tht
     problem.parameters['kap'] = kap
     problem.parameters['Pr'] = Pr
@@ -165,7 +182,7 @@ for tht in thtarr:
 #        plt.title('Growth Rates')
 #        plt.savefig('growth_rates_%.4f_%.1f.png' %(tht, nz))
         
-        name = 'StabilityData_'+str(tht) # Can vary this depending on parameter of interest
-        np.savez(directoryname+name + '.npz', nz=nz, tht=tht, z=z, f=f, kap=kap['g'], Pr=Pr, U=U['g'],
-        V=V['g'], B=B['g'], Bz=Bz['g'], Vz=Vz['g'], H = H, ll=ly_global,
+#        name = 'StabilityData_'+str(tht) # Can vary this depending on parameter of interest
+        np.savez(directorynameout+filename, nz=nz, tht=tht, z=z, f=f, kap=kap['g'], Pr=Pr, U=U['g'],
+        V=V['g'], B=B['g'], Bz=Bz['g'], N = a['N'], Vz=Vz['g'], H = H, ll=ly_global, time=a['time'],
         gr=growth_global)

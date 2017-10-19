@@ -71,6 +71,7 @@ Uz = solver.state['Uz']
 Vz = solver.state['Vz']
 Bz = solver.state['Bz']
 
+#%%
 # LINEAR STABILITY
 
 problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',

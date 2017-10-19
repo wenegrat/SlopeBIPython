@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 # Global parameters
-directoryname = "/home/jacob/dedalus/SlopeAngleRi1/"
+directoryname = "/home/jacob/dedalus/SlopeAngleSI/"
 
 # Physical parameters
 f = 1e-4
@@ -40,7 +40,7 @@ thtarr = np.linspace(-1.5, 1.5, 64)*Shmag*f/Bzmag
 #Shmag = 1e-4
 #Bzmag = (Shmag/Ro)**2 # Ro = Uz/N
 # Grid Parameters
-nz = 64#256
+nz = 128#256
 
 ly_global = np.linspace(1e-2, 30, 64)*f/(np.sqrt(Bzmag)*H)
 
@@ -127,8 +127,8 @@ for tht in thtarr:
     def max_growth_rate(ly):
         logger.info('Computing max growth rate for ly = %f' %ly)
         # Change kx parameter
-        problem.namespace['l'].value = ly
-        problem.namespace['k'].value = 0 # for now only considering baroclinic axis
+        problem.namespace['l'].value = 0
+        problem.namespace['k'].value = ly # for now only considering baroclinic axis
         # Solve for eigenvalues with sparse search near zero, rebuilding NCCs
     #    solver.solve_sparse(solver.pencils[0], N=10, target=0, rebuild_coeffs=True)
         solver.solve_dense(solver.pencils[0], rebuild_coeffs=True)

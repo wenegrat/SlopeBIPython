@@ -17,24 +17,36 @@ directory = os.fsencode(directoryname)
 plt.figure(figsize=(4.8, 4.8))
 counter = 0
 thetas = list(np.zeros(np.array(os.listdir(directory)).shape))
-for file in os.listdir(directory):
+grt = list(np.zeros(np.array(os.listdir(directory)).shape))
+time = list(np.zeros(np.array(os.listdir(directory)).shape))
+for file in sorted(os.listdir(directory)):
     filename = os.fsdecode(file)
     print(filename)
     if filename.endswith(".npz"): 
         a = np.load(directoryname+filename);
 #        plt.semilogx(a['ll'], a['gr'])
-        plt.plot(a['ll']*np.sqrt(a['Bz'][-1])*a['H']/a['f'], a['gr']*np.sqrt(a['Bz'][-1])/(a['f']*a['Vz'][-1]))
+        plt.plot(a['ll']*np.sqrt(1.225e-5)*a['H']/a['f'], a['gr']/(a['f']))
         plt.xlabel('along-track wavenumber [m$^{-1}$]')
         plt.ylabel('growth rate')
         plt.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+        plt.ylim((0,.3))
         plt.tight_layout()        
         thetas[counter] = str(np.real(np.tanh(a['tht'])*a['Bz'][-1]/(a['f']*a['Vz'][-1])))
+        grt[counter] = max(a['gr'])
+        time[counter] = a['time']
         counter = counter + 1
         continue
     else:
         continue
+idx = np.argsort(time)
+grt= grt[idx]
+time= time[idx]
 #plt.legend(thetas)
         
+plt.figure()
+plt.plot(time, grt/a['f'])
+plt.ylim((0,0.3))
+    
 z = a['z']    
 # Make Background State Plot
 fig, ax = plt.subplots(1, 3, sharey=True)
