@@ -25,14 +25,13 @@ logger = logging.getLogger(__name__)
 
 
 # Global parameters
-directoryname = "/home/jacob/Dropbox/Slope BI/EkmanFiles/"
+directoryname = "/home/jacob/Dropbox/Slope BI/EkmanUpFiles/"
 directory = os.fsencode(directoryname)
 
-directorynameout = "/home/jacob/dedalus/SlopeEkman/"
+directorynameout = "/home/jacob/dedalus/SlopeEkmanUp/"
 
 # Physical parameters
 f = 1e-4
-tht = 0
 Pr = 1
 H = 100
 Ri = 1
@@ -81,7 +80,7 @@ for file in os.listdir(directory):
     if filename.endswith(".npz"): 
         a = np.load(directoryname+filename);
     
-    
+    tht = np.float(a['tht'])
     problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
             'bz'], eigenvalue='omg', tolerance = 1e-10)
     kap['g'] = np.interp(z,a['z'], a['kap'])
@@ -89,18 +88,18 @@ for file in os.listdir(directory):
     Uz  = U.differentiate(z_basis)
     V['g'] = np.interp(z, a['z'], a['v']+a['V'])
     Vz = V.differentiate(z_basis)
-    B['g'] = np.interp(z, a['z'], a['b'] + a['N']**2*a['z'])
+    B['g'] = np.interp(z, a['z'], a['b'] + a['N']**2*a['z']*np.cos(tht))
     Bz = B.differentiate(z_basis)
     
-    problem.parameters['tht'] = a['tht']
+    problem.parameters['tht'] = tht
     problem.parameters['U'] = U
     problem.parameters['V'] = V
     problem.parameters['B'] = B
     problem.parameters['Uz'] = Uz
     problem.parameters['Vz'] = Vz
-    problem.parameters['NS'] = Bz
+    problem.parameters['Bz'] = Bz
+    problem.parameters['N'] = np.float(a['N'])
     problem.parameters['f'] = np.float(a['f'])
-    problem.parameters['tht'] = tht
     problem.parameters['kap'] = kap
     problem.parameters['Pr'] = Pr
     problem.parameters['k'] = 0. # will be set in loop
@@ -111,15 +110,18 @@ for file in os.listdir(directory):
     problem.add_equation(('dt(u) + U*dx(u) + V*dy(u) + w*Uz - f*v*cos(tht) + dx(p)'
             '- b*sin(tht) - Pr*(kap*dx(dx(u)) + kap*dy(dy(u)) + dz(kap)*uz'
             '+ kap*dz(uz)) = 0'))
-    problem.add_equation(('dt(v) + U*dx(v) + V*dy(v) + w*Vz*cos(tht) + f*u*cos(tht)'
+    problem.add_equation(('dt(v) + U*dx(v) + V*dy(v) + w*Vz + f*u*cos(tht)'
             '- f*w*sin(tht) + dy(p) - Pr*(kap*dx(dx(v)) + kap*dy(dy(v))'
             '+ dz(kap)*vz + kap*dz(vz)) = 0'))
     problem.add_equation(('(dt(w) + U*dx(w) + V*dy(w)) + f*v*sin(tht) + dz(p)'
             '- b*cos(tht) - Pr*(kap*dx(dx(w)) + kap*dy(dy(w)) + dz(kap)*wz'
             '+ kap*dz(wz)) = 0'))
-    problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*(Vz*f*cos(tht) + NS*sin(tht))'
-                '+ w*(NS*cos(tht) - Vz*f*sin(tht)) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
+    problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*N**2*sin(tht)'
+                '+ w*Bz - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
                 '- kap*dz(bz) = 0'))
+#    problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*N**2*sin(tht)'
+#        '+ w*(N**2*cos(tht) + Bz) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
+#        '- kap*dz(bz) = 0'))
     #problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*Vz*f'
     #        '+ w*(Bz) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
     #        '- kap*dz(bz) = 0'))

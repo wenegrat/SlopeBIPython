@@ -18,14 +18,14 @@ kap_1 = 1e-3 # bottom enhancement of diffusivity
 h = 200. # decay scale of mixing
 Pr = 1 # Prandtl number
 H = 100. # domain height
-V = .1
+V = -.1
 
 # number of grid points
 nz = 500
 
 # file name that results are saved in
-name = '/home/jacob/Dropbox/Slope BI/Figures/Ekman/'
-directoryname = '/home/jacob/Dropbox/Slope BI/EkmanFiles/'
+name = '/home/jacob/Dropbox/Slope BI/Figures/EkmanUp/'
+directoryname = '/home/jacob/Dropbox/Slope BI/EkmanUpFiles/'
 # build domain
 z = np.linspace(0, H, nz)
 dz = z[1]-z[0]
@@ -123,7 +123,13 @@ while iteration < stoptime:
     kap         = (-maxv + minv)*10*(Ri-0.2)+maxv
     kap[Ri>0.3] = minv
     kap[Ri<0.2] = maxv
+    
+    #Constant diffusivity case
+#    kap         = 5e-3*np.ones(z.shape)
+    
     kapfull[1:-1] = kap
+    
+
     # Convert ends to forward differences
 #    
 #    deriv[0,0] = -1/dz

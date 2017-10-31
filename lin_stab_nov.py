@@ -85,8 +85,7 @@ plt.axhline(y=dt, color='r', linestyle='-')
 #%%
 # LINEAR STABILITY
 
-problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
-        'bz'], eigenvalue='omg')
+problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'wz'], eigenvalue='omg')
 problem.parameters['U'] = U
 problem.parameters['V'] = V
 problem.parameters['B'] = B
@@ -104,30 +103,26 @@ problem.substitutions['dx(A)'] = "1j*k*A"
 problem.substitutions['dy(A)'] = "1j*l*A"
 problem.substitutions['dt(A)'] = "-1j*omg*A"
 problem.add_equation(('dt(u) + U*dx(u) + V*dy(u) + w*Uz - f*v*cos(tht) + dx(p)'
-        '- b*sin(tht) - Pr*(kap*dx(dx(u)) + kap*dy(dy(u)) + dz(kap)*uz'
-        '+ kap*dz(uz)) = 0'))
+        '- b*sin(tht)  = 0'))
 problem.add_equation(('dt(v) + U*dx(v) + V*dy(v) + w*Vz + f*u*cos(tht)'
-        '- f*w*sin(tht) + dy(p) - Pr*(kap*dx(dx(v)) + kap*dy(dy(v))'
-        '+ dz(kap)*vz + kap*dz(vz)) = 0'))
+        '- f*w*sin(tht) + dy(p) = 0'))
 problem.add_equation(('dt(w) + U*dx(w) + V*dy(w) + f*v*sin(tht) + dz(p)'
-        '- b*cos(tht) - Pr*(kap*dx(dx(w)) - kap*dy(dy(w)) - dz(kap)*wz'
-        '+ kap*dz(wz)) = 0'))
+        '- b*cos(tht)  = 0'))
 problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*N**2*sin(tht)'
-        '+ w*(N**2*cos(tht) + Bz) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
-        '- kap*dz(bz) = 0'))
+        '+ w*(N**2*cos(tht) + Bz) = 0'))
 problem.add_equation('dx(u) + dy(v) + wz = 0')
-problem.add_equation('uz - dz(u) = 0')
-problem.add_equation('vz - dz(v) = 0')
+#problem.add_equation('uz - dz(u) = 0')
+#problem.add_equation('vz - dz(v) = 0')
 problem.add_equation('wz - dz(w) = 0')
-problem.add_equation('bz - dz(b) = 0')
-problem.add_bc('left(u) = 0')
-problem.add_bc('left(v) = 0')
+#problem.add_equation('bz - dz(b) = 0')
+#problem.add_bc('left(u) = 0')
+#problem.add_bc('left(v) = 0')
 problem.add_bc('left(w) = 0')
-problem.add_bc('left(bz) = 0')
-problem.add_bc('right(uz) = 0')
-problem.add_bc('right(vz) = 0')
+#problem.add_bc('left(bz) = 0')
+#problem.add_bc('right(uz) = 0')
+#problem.add_bc('right(vz) = 0')
 problem.add_bc('right(w) = 0')
-problem.add_bc('right(bz) = 0')
+#problem.add_bc('right(bz) = 0')
 
 # set up solver
 solver = problem.build_solver()
