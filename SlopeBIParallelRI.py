@@ -43,7 +43,7 @@ Riv = np.linspace(0.25, 10, 48)
 #Shmag = 1e-4
 #Bzmag = (Shmag/Ro)**2 # Ro = Uz/N
 # Grid Parameters
-nz = 128#256
+nz = 48#256
 
 ly_global = np.linspace(1e-2, 6, 64)*f/(Shmag*H)
 
@@ -57,7 +57,7 @@ z = domain.grid(0)
 # Define Stability Analysis Parameters
 
 kap = domain.new_field(name='kap')
-kap['g'] = 0*np.ones(z.shape)
+kap['g'] = 1e-5*np.ones(z.shape)
 U = domain.new_field(name='U')
 U['g'] = 0*z
 Uz = domain.new_field(name='Uz')

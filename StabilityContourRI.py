@@ -53,20 +53,31 @@ grn = gr/a['f']
 #grn = gr/a['f']/(np.sqrt(a['Bz'][-1])/a['f']*a['tht'])
 #S = np.sqrt(a['Bz'][-1])/a['f']*thetas
 #grn = (gr*a['Bz'][-1]*a['f']/((a['f']*a['Vz'][-1])**2)*np.sqrt(np.sqrt(0.2*a['Bz'][-1]/a['f'])))
+
+nc = 41
+maxc = 0.3
+fs =16
+
 grn = grn.astype(float)
 plt.figure(figsize=(10, 6))
 plt.grid(linestyle='--', alpha = 0.5)
-plt.contourf(a['ll']/(a['f']/(a['Vz'][-1]*a['H'])), rivec, 
-               grn,np.linspace(1e-2, 0.25, 20),vmin=-0.2, vmax=0.2, cmap='RdBu_r', labelsize=20)
-#plt.contour(a['ll']*np.sqrt(a['Bz'][-1])*a['H']/a['f'], thetas*a['Bz'][-1]/(a['f']*a['Vz'][-1]), 
-#               grn,np.linspace(1e-2, .5, 10),vmin=-0.5, vmax=0.5)
-plt.colorbar()
+ax = plt.contourf(a['ll']/(a['f']/(a['Vz'][-1]*a['H'])), rivec, 
+               grn,np.linspace(0, maxc, nc),vmin=-maxc, vmax=maxc, cmap='RdBu_r', labelsize=20)
+plt.xlim((0,3))
+cbar = plt.colorbar()
+cbar.set_ticks(np.linspace(0, 1, 11))
+cbar.set_label('$\hat{\omega}$', fontsize=18)
+CS = plt.contour(a['ll']/(a['f']/(a['Vz'][-1]*a['H'])), rivec, grn, 
+            np.linspace(.1, 1, 20),colors='0.5' )
+plt.tick_params(axis='both', which='major', labelsize=fs)
+plt.clabel(CS, inline=1, fontsize = 10, fmt='%1.2f')
 plt.xlabel('$\hat{l}$', fontsize= 20)
 plt.ylabel('$Ri$', fontsize=20)
 
 print("Maximum Ri processed: "+str(np.max(rivec[rivec!=0])))
 
-plt.figure(figsize=(10, 6))
-plt.plot(rivec, maxgr/a['f'])
+#plt.figure(figsize=(10, 6))
+#plt.plot(rivec, maxgr/a['f'])
 #plt.ylim((-0.1, 0.1))
+#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/RiStability.eps', format='eps', dpi=1000)
 

@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from pylab import *
 
 from dedalus import public as de
 
@@ -12,16 +11,16 @@ N = 1e-3 # buoyancy frequency
 f = 2.5e-5 # Coriolis parameter
 tht = 2e-3 # slope angle
 kap_0 = 1e-5 # background diffusivity
-kap_1 = 5e-3 # bottom enhancement of diffusivity
+kap_1 = 1e-3 # bottom enhancement of diffusivity
 h = 200. # decay scale of mixing
 Pr = 1 # Prandtl number
 H = 2500. # domain height
 
 # along-slope wavenumbers
-ll = np.logspace(-5, -2, 32)
+ll = np.logspace(-5, -2, 64)
 
 # number of grid points
-nz = 64
+nz = 128
 
 # file name that results are saved in
 name = 'test'
@@ -71,20 +70,6 @@ Uz = solver.state['Uz']
 Vz = solver.state['Vz']
 Bz = solver.state['Bz']
 
-#%% ADDING MY OWN CHECK OF RI
-N2hat = Bz['g'] + N**2*cos(tht)
-M2hat = N**2*sin(tht)
-N2 = N2hat*cos(tht) + M2hat*sin(tht)
-M2 = M2hat*cos(tht) - N2hat*sin(tht)
-N2 = N**2 + Bz['g']*cos(tht)
-M2 = -Bz['g']*sin(tht)
-Ri = N2*f**2/M2**2
-dt = np.sqrt(2*kap_1/f)
-
-plt.figure()
-plt.plot(Ri[0:10], z[0:10])
-plt.axhline(y=dt, color='r', linestyle='-')
-#%%
 # LINEAR STABILITY
 
 problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
@@ -112,12 +97,9 @@ problem.add_equation(('dt(v) + U*dx(v) + V*dy(v) + w*Vz + f*u*cos(tht)'
         '- f*w*sin(tht) + dy(p) - Pr*(kap*dx(dx(v)) + kap*dy(dy(v))'
         '+ dz(kap)*vz + kap*dz(vz)) = 0'))
 problem.add_equation(('dt(w) + U*dx(w) + V*dy(w) + f*v*sin(tht) + dz(p)'
-        '- b*cos(tht) - Pr*(kap*dx(dx(w)) - kap*dy(dy(w)) - dz(kap)*wz'
+        '- b*cos(tht) - Pr*(kap*dx(dx(w)) + kap*dy(dy(w)) + dz(kap)*wz'
         '+ kap*dz(wz)) = 0'))
-#problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*N**2*sin(tht)'
-#        '+ w*(N**2*cos(tht) + Bz) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
-#        '- kap*dz(bz) = 0'))
-problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*(N**2*sin(tht)+cos(tht)/sin(tht)*Bz)'
+problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*N**2*sin(tht)'
         '+ w*(N**2*cos(tht) + Bz) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
         '- kap*dz(bz) = 0'))
 problem.add_equation('dx(u) + dy(v) + wz = 0')
@@ -136,7 +118,7 @@ problem.add_bc('right(bz) = 0')
 
 # set up solver
 solver = problem.build_solver()
-#%%
+
 def sorted_eigen(k, l):
 
     """
@@ -198,34 +180,51 @@ np.savez(name + '.npz', nz=nz, N=N, tht=tht, z=z, kap=kap['g'], Pr=Pr, U=U['g'],
 # PLOTTING
 
 # mean state
-
-fig, ax = plt.subplots(1, 3, sharey=True)
+#%%
+fig, ax = plt.subplots(1, 3, sharey=True,figsize=(9, 5))
 
 ax[0].semilogx(kap['g'], z)
-ax[0].set_xlabel('mixing coefficient [m$^2$/s]', va='baseline')
+ax[0].set_xticks([1e-5, 1e-4, 1e-3])
+ax[0].set_xlabel('mixing coefficient [m$^2$/s]')
 ax[0].set_ylabel('slope-normal coordinate [m]')
-ax[0].get_xaxis().set_label_coords(.5, -.12)
+ax[0].grid(linestyle='--', alpha = 0.5)
+ax[0].set_ylim((0, 2500))
+
+#ax[0].get_xaxis().set_label_coords(.5, -.12)
 
 ax[1].plot(U['g'].real, z)
 ax[1].plot(V['g'].real, z)
-ax[1].set_xlabel('mean flow [m/s]', va='baseline')
-ax[1].get_xaxis().set_label_coords(.5, -.12)
+#ax[1].set_xlim((0, 0.1))
+ax[1].set_xticks([0, 0.05, 0.1])
+ax[1].set_xlim((-.005, 0.1))
+ax[1].set_ylim((0, 2500))
+ax[1].set_xlabel('mean flow [m/s]')
+#ax[1].get_xaxis().set_label_coords(.5, -.12)
+ax[1].grid(linestyle='--', alpha = 0.5)
 
 ax[2].plot(N**2*np.cos(tht)*z + B['g'].real, z)
-ax[2].set_xlabel('mean buoyancy [m/s$^2$]', va='baseline')
-ax[2].get_xaxis().set_label_coords(.5, -.12)
-
-#fig.savefig('fig/mean_state.pdf')
+ax[2].set_xlabel('mean buoyancy [m/s$^2$]')
+#ax[2].get_xaxis().set_label_coords(.5, -.12)
+ax[2].set_xlim((0, 0.002))
+ax[2].set_ylim((0, 2500))
+ax[2].grid(linestyle='--', alpha = 0.5)
+#plt.tight_layout()
+#fig.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingBasicState.pdf')
 
 # energetics
 #%%
-plt.figure(figsize=(4.8, 4.8))
+plt.figure(figsize=(6, 4))
 plt.semilogx(ll, gr)
 plt.xlabel('along-track wavenumber [m$^{-1}$]')
-plt.ylabel('growth rate')
+plt.ylabel('growth rate [$s^{-1}$]')
 plt.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+plt.grid(linestyle='--', alpha = 0.5, which='Both')
+
 plt.tight_layout()
-#plt.savefig('fig/growth_rate.pdf')
+
+#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingStability.pdf')
+
+
 #%%
 plt.figure(figsize=(4.8, 4.8))
 plt.plot(SP, z)

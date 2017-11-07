@@ -24,29 +24,33 @@ logger = logging.getLogger(__name__)
 
 
 # Global parameters
-directoryname = "/home/jacob/dedalus/SlopeAngleRi1/"
+directoryname = "/home/jacob/dedalus/DeepShallowModes/"
 
 # Physical parameters
 f = 1e-4
 tht = 0
 Pr = 1
-H = 100
-Ri = 1
+H = 1000
+BLH = 250
+Ri = 100
+RiBL = 1
 #Bzmag = 2.5e-5
 #Shmag = np.sqrt(Bzmag/Ri)
 Shmag = .1/H
-Bzmag = Shmag**2
+Bzmag = Ri*Shmag**2
+BzmagBL = RiBL*Shmag**2
+
 #Shmag = 0;
-thtarr = np.linspace(-2, 2, 64)*Shmag*f/Bzmag
+thtarr = np.linspace(0, 1e-2, 5)
 
 #Ri = 
 #Shmag = 1e-4
 #Bzmag = (Shmag/Ro)**2 # Ro = Uz/N
 # Grid Parameters
-nz = 64#128#256
+nz = 128#256
 
-ly_global = np.linspace(1e-2, 4.25, 64)*f/(np.sqrt(Bzmag)*H)
-
+ly_global = np.linspace(1e-4, 1e-2, 64)
+ly_global = np.logspace(-4, -2, 128)
 # Create bases and domain
 # Use COMM_SELF so keep calculations independent between processes
 z_basis = de.Chebyshev('z', nz, interval=(0,H))
@@ -70,9 +74,17 @@ V['g'] = Shmag*(z)
 Vz['g'] = Shmag*(z-z+1) #Note this assumes no horizotal variation (ie. won't work for the non-uniform case)
 Bt = np.zeros([nz])
 Bz['g'] = np.array(Bzmag*np.ones([nz]))
+zind = np.floor( next((x[0] for x in enumerate(z) if x[1]>BLH)))
+#Bz['g'][0:zind] = BzmagBL
+
+tpoint = np.floor( next((x[0] for x in enumerate(z) if x[1]>BLH)))
+Bstr  = -0.5*(np.tanh((-z + z[tpoint])/40)+1)
+Bz['g'] = Bz['g']*10**(2*Bstr)
+    
+    
 Bt[1:nz] = integrate.cumtrapz(Bz['g'], z)
 B['g'] = Bt
-
+#%%
 # 2D Boussinesq hydrodynamics, with no-slip boundary conditions
 # Use substitutions for x and t derivatives
 for tht in thtarr:
@@ -127,7 +139,7 @@ for tht in thtarr:
     problem.add_bc('left(bz) = 0')
     problem.add_bc('right(uz) = 0')
     problem.add_bc('right(vz) = 0')
-    problem.add_bc('right(w) = 0')
+    problem.add_bc('right(w) = -right(u)*tan(tht)') # Flat upper boundary
 #    problem.add_bc('right(w) = 1/10*(dt(right(p)) + right(u)*dx(right(p))+right(v)*dy(right(p)))')
     problem.add_bc('right(bz) = 0')
     

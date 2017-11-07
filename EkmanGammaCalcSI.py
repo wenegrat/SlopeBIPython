@@ -24,29 +24,31 @@ logger = logging.getLogger(__name__)
 
 
 # Global parameters
-directoryname = "/home/jacob/dedalus/SlopeAngleRi1/"
+directoryname = "/home/jacob/dedalus/EkmanGammaSI/"
 
 # Physical parameters
 f = 1e-4
-tht = 0
 Pr = 1
-H = 100
-Ri = 1
-#Bzmag = 2.5e-5
-#Shmag = np.sqrt(Bzmag/Ri)
-Shmag = .1/H
-Bzmag = Shmag**2
+H = 1000
+
+Vob = 0.1
+No = 5e-3
+f = 1e-4
+theta = 5e-3
+So = (No/f*np.tan(theta))**2
+gc = (1+So)**(-1)
+
+gammas = np.linspace(0.5, 1, 32)
 #Shmag = 0;
-thtarr = np.linspace(-2, 2, 64)*Shmag*f/Bzmag
 
 #Ri = 
 #Shmag = 1e-4
 #Bzmag = (Shmag/Ro)**2 # Ro = Uz/N
 # Grid Parameters
-nz = 64#128#256
+nz = 64#256
 
-ly_global = np.linspace(1e-2, 4.25, 64)*f/(np.sqrt(Bzmag)*H)
-
+ly_global = np.linspace(1e-4, 1e-2, 64)
+ly_global = np.logspace(-4, -2, 128)
 # Create bases and domain
 # Use COMM_SELF so keep calculations independent between processes
 z_basis = de.Chebyshev('z', nz, interval=(0,H))
@@ -66,31 +68,60 @@ V = domain.new_field(name='V')
 Vz = domain.new_field(name='Vz')
 Bz = domain.new_field(name='Bz')
 B = domain.new_field(name='B')
-V['g'] = Shmag*(z)
-Vz['g'] = Shmag*(z-z+1) #Note this assumes no horizotal variation (ie. won't work for the non-uniform case)
+V['g'] = Vob
+Vz['g'] = 0 #Note this assumes no horizotal variation (ie. won't work for the non-uniform case)
 Bt = np.zeros([nz])
-Bz['g'] = np.array(Bzmag*np.ones([nz]))
-Bt[1:nz] = integrate.cumtrapz(Bz['g'], z)
-B['g'] = Bt
+Bz['g'] = np.array(No**2*np.ones([nz]))
+#Bz['g'][0:zind] = BzmagBL
 
+    
+    
+
+#%%
 # 2D Boussinesq hydrodynamics, with no-slip boundary conditions
 # Use substitutions for x and t derivatives
-for tht in thtarr:
+for gamma in gammas:
 #    bz = 1/(2*Ri*np.sin(tht)**2)*(f**2*np.cos(tht)+np.sqrt(f**4*np.cos(tht)**2 + 4*Bzmag*f**2*Ri*np.sin(tht)**2))
 #    Shmag = -bz/(f*np.sin(tht))
-
+#    h = Vob*np.sin(theta)/(gamma*f*So)
+#    if h<0:
+#        Vo=-Vob
+#        h =-h
+#    else:
+#        Vo = Vob
+    
+    if gamma<0:
+        Vo = -Vob
+        h = Vob*np.sin(theta)/((1-gamma)*f*So)
+    else:
+        Vo = Vob
+        h = Vob*np.sin(theta)/(gamma*f*So)
+        
+    if h>z[-2]:
+        h=z[-2]
+        
+        
+        
+    zind = np.floor( next((x[0] for x in enumerate(z) if x[1]>h)))
+    V['g'] = Vo
+    Vz['g'][0:zind] = Vo/h
+    V['g'][0:zind] = Vo*z[0:zind]/h
+    Bz['g'][0:zind] = No**2*(1-(gamma))*np.cos(theta)
+    Bt[1:nz] = integrate.cumtrapz(Bz['g'], z)
+    B['g'] = Bt
 
     problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
             'bz'], eigenvalue='omg', tolerance = 1e-10)
-    problem.parameters['tht'] = tht
+    problem.parameters['tht'] = theta
     problem.parameters['U'] = U
     problem.parameters['V'] = V
     problem.parameters['B'] = B
     problem.parameters['Uz'] = Uz
     problem.parameters['Vz'] = Vz
     problem.parameters['NS'] = Bz
+    problem.parameters['No'] = No
     problem.parameters['f'] = f
-    problem.parameters['tht'] = tht
+    problem.parameters['tht'] = theta
     problem.parameters['kap'] = kap
     problem.parameters['Pr'] = Pr
     problem.parameters['k'] = 0. # will be set in loop
@@ -101,7 +132,7 @@ for tht in thtarr:
     problem.add_equation(('dt(u) + U*dx(u) + V*dy(u) + w*Uz - f*v*cos(tht) + dx(p)'
             '- b*sin(tht) - Pr*(kap*dx(dx(u)) + kap*dy(dy(u)) + dz(kap)*uz'
             '+ kap*dz(uz)) = 0'))
-    problem.add_equation(('dt(v) + U*dx(v) + V*dy(v) + w*Vz*cos(tht) + f*u*cos(tht)'
+    problem.add_equation(('dt(v) + U*dx(v) + V*dy(v) + w*Vz + f*u*cos(tht)'
             '- f*w*sin(tht) + dy(p) - Pr*(kap*dx(dx(v)) + kap*dy(dy(v))'
             '+ dz(kap)*vz + kap*dz(vz)) = 0'))
     problem.add_equation(('(dt(w) + U*dx(w) + V*dy(w)) + f*v*sin(tht) + dz(p)'
@@ -110,8 +141,11 @@ for tht in thtarr:
 #    problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*(NS*sin(tht))'
 #                '+ w*(NS*cos(tht)) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
 #                '- kap*dz(bz) = 0'))
-    problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*(NS*sin(tht)+f*Vz*cos(tht))'
-            '+ w*(NS*cos(tht)-f*Vz*sin(tht)) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
+#    problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*(NS*sin(tht)+f*Vz*cos(tht))'
+#            '+ w*(NS*cos(tht)-f*Vz*sin(tht)) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
+#            '- kap*dz(bz) = 0'))
+    problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*(No**2*sin(tht))'
+            '+ w*(NS) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
             '- kap*dz(bz) = 0'))
     #problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*Vz*f'
     #        '+ w*(Bz) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
@@ -127,7 +161,7 @@ for tht in thtarr:
     problem.add_bc('left(bz) = 0')
     problem.add_bc('right(uz) = 0')
     problem.add_bc('right(vz) = 0')
-    problem.add_bc('right(w) = 0')
+    problem.add_bc('right(w) = -right(u)*tan(tht)') # Flat upper boundary
 #    problem.add_bc('right(w) = 1/10*(dt(right(p)) + right(u)*dx(right(p))+right(v)*dy(right(p)))')
     problem.add_bc('right(bz) = 0')
     
@@ -137,8 +171,8 @@ for tht in thtarr:
     def max_growth_rate(ly):
         logger.info('Computing max growth rate for ly = %f' %ly)
         # Change kx parameter
-        problem.namespace['l'].value = ly
-        problem.namespace['k'].value = 0 # for now only considering baroclinic axis
+        problem.namespace['l'].value = 0
+        problem.namespace['k'].value = ly # for now only considering baroclinic axis
         # Solve for eigenvalues with sparse search near zero, rebuilding NCCs
     #    solver.solve_sparse(solver.pencils[0], N=10, target=0, rebuild_coeffs=True)
         solver.solve_dense(solver.pencils[0], rebuild_coeffs=True)
@@ -175,7 +209,7 @@ for tht in thtarr:
 #        plt.title('Growth Rates')
 #        plt.savefig('growth_rates_%.4f_%.1f.png' %(tht, nz))
         
-        name = 'StabilityData_'+str(tht) # Can vary this depending on parameter of interest
-        np.savez(directoryname+name + '.npz', nz=nz, tht=tht, z=z, f=f, kap=kap['g'], Pr=Pr, U=U['g'],
+        name = 'StabilityData_'+str(gamma) # Can vary this depending on parameter of interest
+        np.savez(directoryname+name + '.npz', nz=nz, tht=theta, gamma = gamma, z=z, f=f, kap=kap['g'], Pr=Pr, U=U['g'],
         V=V['g'], B=B['g'], Bz=Bz['g'], Vz=Vz['g'], H = H, ll=ly_global,
         gr=growth_global)

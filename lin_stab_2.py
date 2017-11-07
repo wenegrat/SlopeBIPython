@@ -22,7 +22,7 @@ H = 1000. # domain height
 ll = np.logspace(-1, 1, 32)*f/.1
 
 # number of grid points
-nz = 128
+nz = 32
 
 # file name that results are saved in
 name = 'test'
@@ -119,7 +119,7 @@ for i in range(size(thtarr)):
     problem.parameters['Uz'] = Uz
     problem.parameters['Vz'] = Vz
     problem.parameters['Bz'] = Bz
-    problem.parameters['N'] = N
+#    problem.parameters['N'] = N
     problem.parameters['f'] = f
     problem.parameters['tht'] = tht
     problem.parameters['kap'] = kap
