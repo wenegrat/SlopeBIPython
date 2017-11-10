@@ -74,5 +74,7 @@ plt.ylabel('$\delta$', fontsize=20)
 
 
 print("Maximum \delta processed: "+str(np.max(thetas[thetas!=0])*a['Bz'][-1]/(a['f']*a['Vz'][-1])))
+
+
 #plt.ylim((-0.1, 0.1))
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/StabilityRi1.eps', format='eps', dpi=1000)

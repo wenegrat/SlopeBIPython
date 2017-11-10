@@ -30,22 +30,23 @@ directoryname = "/home/jacob/dedalus/SlopeAngleRi1/"
 f = 1e-4
 tht = 0
 Pr = 1
-H = 100
+H = 200
 Ri = 1
 #Bzmag = 2.5e-5
 #Shmag = np.sqrt(Bzmag/Ri)
 Shmag = .1/H
 Bzmag = Shmag**2
 #Shmag = 0;
-thtarr = np.linspace(-2, 2, 64)*Shmag*f/Bzmag
+thtarr = np.linspace(-2, 2, 128)*Shmag*f/Bzmag
 
+#%%
 #Ri = 
 #Shmag = 1e-4
 #Bzmag = (Shmag/Ro)**2 # Ro = Uz/N
 # Grid Parameters
-nz = 64#128#256
+nz = 256#128#256
 
-ly_global = np.linspace(1e-2, 4.25, 64)*f/(np.sqrt(Bzmag)*H)
+ly_global = np.linspace(1e-2, 4.25, 128)*f/(np.sqrt(Bzmag)*H)
 
 # Create bases and domain
 # Use COMM_SELF so keep calculations independent between processes
@@ -79,6 +80,7 @@ for tht in thtarr:
 #    bz = 1/(2*Ri*np.sin(tht)**2)*(f**2*np.cos(tht)+np.sqrt(f**4*np.cos(tht)**2 + 4*Bzmag*f**2*Ri*np.sin(tht)**2))
 #    Shmag = -bz/(f*np.sin(tht))
 
+    V['g'] = Shmag*(z)/np.cos(tht)
 
     problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
             'bz'], eigenvalue='omg', tolerance = 1e-10)
@@ -101,7 +103,7 @@ for tht in thtarr:
     problem.add_equation(('dt(u) + U*dx(u) + V*dy(u) + w*Uz - f*v*cos(tht) + dx(p)'
             '- b*sin(tht) - Pr*(kap*dx(dx(u)) + kap*dy(dy(u)) + dz(kap)*uz'
             '+ kap*dz(uz)) = 0'))
-    problem.add_equation(('dt(v) + U*dx(v) + V*dy(v) + w*Vz*cos(tht) + f*u*cos(tht)'
+    problem.add_equation(('dt(v) + U*dx(v) + V*dy(v) + w*Vz/cos(tht) + f*u*cos(tht)'
             '- f*w*sin(tht) + dy(p) - Pr*(kap*dx(dx(v)) + kap*dy(dy(v))'
             '+ dz(kap)*vz + kap*dz(vz)) = 0'))
     problem.add_equation(('(dt(w) + U*dx(w) + V*dy(w)) + f*v*sin(tht) + dz(p)'

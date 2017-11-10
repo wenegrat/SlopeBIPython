@@ -36,9 +36,10 @@ Bzmag = 2.5e-5 # N = 5e-3
 tht = 5e-3
 
 Shmag = Bzmag*tht/1e-4
+#Shmag = 1e-4
 #thtarr = np.linspace(-1.5, 1.5, 64)*Shmag*f/Bzmag
 
-Riv = np.linspace(0.25, 10, 48)
+Riv = np.linspace(0.01, 10, 48)
 #Ri = 
 #Shmag = 1e-4
 #Bzmag = (Shmag/Ro)**2 # Ro = Uz/N
@@ -64,14 +65,14 @@ Uz = domain.new_field(name='Uz')
 Uz['g'] = 0*z
 V = domain.new_field(name='V')
 Vz = domain.new_field(name='Vz')
-V['g'] = Shmag*(z)
+V['g'] = Shmag*(z)/np.cos(tht)
 Vz['g'] = Shmag*(z-z+1) 
 Bz = domain.new_field(name='Bz')
-B = domain.new_field(name='B')
-Bt = np.zeros([nz])
+#B = domain.new_field(name='B')
+#Bt = np.zeros([nz])
 Bz['g'] = np.array(Bzmag*np.ones([nz]))
-Bt[1:nz] = integrate.cumtrapz(Bz['g'], z)
-B['g'] = Bt
+#Bt[1:nz] = integrate.cumtrapz(Bz['g'], z)
+#B['g'] = Bt
 
 # 2D Boussinesq hydrodynamics, with no-slip boundary conditions
 # Use substitutions for x and t derivatives
@@ -81,15 +82,15 @@ for Ri in Riv:
 #    Vz['g'] = Shmag*(z-z+1) #Note this assumes no horizotal variation (ie. won't work for the non-uniform case)
     Bzmag = Ri*Shmag**2 
     Bz['g'] = np.array(Bzmag*np.ones([nz]))
-    Bt[1:nz] = integrate.cumtrapz(Bz['g'], z)
-    B['g'] = Bt
+#    Bt[1:nz] = integrate.cumtrapz(Bz['g']/np.cos(tht), z)
+#    B['g'] = Bt
     
     problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
             'bz'], eigenvalue='omg', tolerance = 1e-10)
     problem.parameters['tht'] = tht
     problem.parameters['U'] = U
     problem.parameters['V'] = V
-    problem.parameters['B'] = B
+#    problem.parameters['B'] = B
     problem.parameters['Uz'] = Uz
     problem.parameters['Vz'] = Vz
     problem.parameters['NS'] = Bz
@@ -105,7 +106,7 @@ for Ri in Riv:
     problem.add_equation(('dt(u) + U*dx(u) + V*dy(u) + w*Uz*cos(tht) - f*v*cos(tht) + dx(p)'
             '- b*sin(tht) - Pr*(kap*dx(dx(u)) + kap*dy(dy(u)) + dz(kap)*uz'
             '+ kap*dz(uz)) = 0'))
-    problem.add_equation(('dt(v) + U*dx(v) + V*dy(v) + w*Vz*cos(tht) + f*u*cos(tht)'
+    problem.add_equation(('dt(v) + U*dx(v) + V*dy(v) + w*Vz/cos(tht) + f*u*cos(tht)'
             '- f*w*sin(tht) + dy(p) - Pr*(kap*dx(dx(v)) + kap*dy(dy(v))'
             '+ dz(kap)*vz + kap*dz(vz)) = 0'))
     problem.add_equation(('(dt(w) + U*dx(w) + V*dy(w)) + f*v*sin(tht) + dz(p)'
@@ -178,5 +179,5 @@ for Ri in Riv:
         
         name = 'StabilityData_'+str(Ri) # Can vary this depending on parameter of interest
         np.savez(directoryname+name + '.npz', nz=nz, tht=tht, z=z, f=f, kap=kap['g'], Pr=Pr, U=U['g'],
-        V=V['g'], B=B['g'], Bz=Bz['g'], Vz=Vz['g'], H = H, Ri = Ri, ll=ly_global,
+        V=V['g'], Bz=Bz['g'], Vz=Vz['g'], H = H, Ri = Ri, ll=ly_global,
         gr=growth_global)

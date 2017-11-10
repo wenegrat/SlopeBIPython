@@ -16,7 +16,7 @@ plt.rcParams.update({'font.size': 18})
 directoryname = "../SlopeAngleRiVar/"
 directory = os.fsencode(directoryname)
 
-ntht = 64
+ntht = 48
 nll = 64
 
 counter = 0
@@ -35,7 +35,7 @@ for file in os.listdir(directory):
         rivec[counter] = a['Ri']
         gr[counter, :] = a['gr']#[:,-1]
         maxgr[counter] = np.max(gr[counter,:])
-        delta[counter] = a['Bz'][-1]/(a['f']*a['Vz'][-1])*a['tht']
+        delta[counter] = a['Bz'][-1]/(a['f']*a['Vz'][-1]*np.cos(a['tht']))*a['tht']
         grn[counter,:] = (gr[counter,:]/a['f'])*(rivec[counter]**(1/2))
         counter = counter + 1
 #        plt.plot(a['ll'], gr[counter-1,:]*np.sqrt(a['Bz'][-1])/(a['f']*a['Vz'][-1]))
@@ -76,6 +76,18 @@ plt.ylabel('$Ri$', fontsize=20)
 
 print("Maximum Ri processed: "+str(np.max(rivec[rivec!=0])))
 
+#%%
+# Make plot comparing Ri=1 with Stone solution
+k = a['ll']/(a['f']/(a['V'][-1]))
+rind = 47
+Ri = rivec[rind]
+stgr = 1/(2*3**(1/2))*(k - 2/15*k**3*(Ri + 1))
+
+
+plt.figure()
+plt.plot(k, stgr)
+plt.plot(k, grn[rind,:])
+plt.ylim((0, .5))
 #plt.figure(figsize=(10, 6))
 #plt.plot(rivec, maxgr/a['f'])
 #plt.ylim((-0.1, 0.1))

@@ -70,4 +70,8 @@ cbar = fig.colorbar(IM,  ax=ax.ravel().tolist(), orientation='horizontal', shrin
 cbar.set_label('$\hat{\omega}$', fontsize=18)
 cbar.set_ticks(np.linspace(0, 1, 11))
 
+#%%
+plt.figure()
+plt.plot(ll, om[250,:])
+plt.plot(ll, om[251,:])
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/QGPlot.eps', format='eps', dpi=1000)

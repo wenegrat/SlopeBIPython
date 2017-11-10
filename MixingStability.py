@@ -226,16 +226,20 @@ plt.tight_layout()
 
 
 #%%
-plt.figure(figsize=(4.8, 4.8))
-plt.plot(SP, z)
-plt.plot(BP, z)
-plt.xlabel('kinetic energy tendency [m$^2$/s$^3$]')
-plt.ylabel('slope-normal coordinate [m]')
-plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-plt.legend(['shear production', 'buoyancy production'], frameon=False)
-plt.tight_layout()
-#plt.savefig('fig/energetics.pdf')
+plt.figure(figsize=(5, 6))
+plt.plot(BP/np.max(BP), z)
+plt.plot(SP/np.max(BP), z)
 
+plt.xlabel('Kinetic energy tendency ')
+plt.ylabel('Slope-normal coordinate [m]')
+plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
+plt.legend([ 'Buoyancy production', 'Shear production'], frameon=False)
+plt.tight_layout()
+plt.grid(linestyle='--', alpha = 0.5)
+plt.ylim((0, 2500))
+#plt.savefig('fig/energetics.pdf')
+#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingEnergetics.pdf')
+#%%
 # most unstable mode
 
 ly = np.linspace(0, 2*np.pi, nz)
@@ -265,3 +269,79 @@ ax[1,0].set_ylabel('slope-normal coordinate [m]')
 #plt.savefig('fig/modes.pdf', dpi=300)
 
 plt.show()
+
+#%%
+#%%
+# most unstable mode
+nc  = 40
+ly = np.linspace(0, 2*np.pi, nz)
+uvel = np.real(u['g'].reshape(nz, 1)* np.exp(1j*ly.reshape(1,nz)))
+vvel = np.real(v['g'].reshape(nz, 1)* np.exp(1j*ly.reshape(1,nz)))
+wvel = np.real(w['g'].reshape(nz, 1)* np.exp(1j*ly.reshape(1,nz)))
+maxu = np.max(uvel)
+
+uvel = uvel/maxu
+vvel = vvel/maxu
+wvel = wvel/maxu
+buoy = np.real(b['g'].reshape(nz, 1)* np.exp(1j*ly.reshape(1,nz)))
+buoy = buoy/np.max(buoy)
+
+fig, ax = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(10, 10))
+# UVEL
+im = ax[0,0].contourf(ly, z, uvel, np.linspace(-1, 1, nc),vmin=-1, vmax=1, cmap='RdBu_r')
+cb = plt.colorbar(im, ax=ax[0,0])
+cb.set_ticks([-1, 0, 1])
+ax[0,0].set_title('Across-slope velocity', fontsize=fs)
+ax[0,0].grid(linestyle='--', alpha = 0.5)
+
+# VVEL
+cl = 0.4
+im = ax[0,1].contourf(ly, z, vvel, np.linspace(-cl, cl, nc),vmin=-cl, vmax=cl, cmap='RdBu_r')
+cb = plt.colorbar(im, ax=ax[0,1])
+cb.set_ticks([-cl, 0, cl])
+ax[0,1].set_title('Along-slope velocity', fontsize=fs)
+ax[0,1].grid(linestyle='--', alpha = 0.5)
+
+# WVEL
+cl = 0.02
+im = ax[1,0].contourf(ly, z, wvel, np.linspace(-cl,cl, nc),vmin=-cl, vmax=cl, cmap='RdBu_r')
+cb = plt.colorbar(im, ax=ax[1,0])
+cb.set_ticks([-cl, 0, cl])
+ax[1,0].set_title('Slope-normal velocity', fontsize=fs)
+ax[1,0].grid(linestyle='--', alpha = 0.5)
+
+# BUOY
+im = ax[1,1].contourf(ly, z, buoy, np.linspace(-1, 1, nc),vmin=-1, vmax=1, cmap='RdBu_r')
+cb = plt.colorbar(im, ax=ax[1,1])
+ax[1,1].grid(linestyle='--', alpha = 0.5)
+cb.set_ticks([-1, 0, 1])
+ax[1,1].set_title('Buoyancy', fontsize=fs)
+ax[0,0].set_xticks([0, np.pi, 2*np.pi])
+ax[1,0].set_xlabel('Phase', fontsize=fs)
+ax[1,1].set_xlabel('Phase', fontsize=fs)
+ax[0,0].set_ylabel('Slope-normal coordinate [m]', fontsize=fs)
+ax[1,0].set_ylabel('Slope-normal coordinate [m]', fontsize=fs)
+
+#labels = [item.get_text() for item in ax[1,1].get_xticklabels()]
+labels = ['0', '$\pi$', '$2\pi$']
+ax[1,1].set_xticklabels(labels)  
+#plt.savefig('fig/modes.pdf', dpi=300)
+plt.tight_layout()
+plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingPerturbations.pdf', format='pdf')
+
+plt.show()
+#%% ADDING MY OWN CHECK OF RI
+N2hat = Bz['g'] + N**2*cos(tht)
+M2hat = N**2*sin(tht)
+N2 = N2hat*cos(tht) + M2hat*sin(tht)
+M2 = M2hat*cos(tht) - N2hat*sin(tht)
+N2 = N**2 + Bz['g']*cos(tht)
+M2 = -Bz['g']*sin(tht)
+Ri = N2*f**2/M2**2
+dt = np.sqrt(2*kap_1/f)
+
+plt.figure()
+plt.plot(Ri, z)
+plt.axhline(y=dt, color='r', linestyle='-')
+plt.ylim((0, 500))
+plt.xlim((0, 50))
