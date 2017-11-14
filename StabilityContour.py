@@ -10,14 +10,16 @@ sys.path.append('/usr/share/')
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.ndimage
+from scipy.ndimage.filters import gaussian_filter
 from pylab import *
 plt.rc('text', usetex=True)
 plt.rcParams.update({'font.size': 18})
-directoryname = "../SlopeAngleRi1/"
+directoryname = "../SlopeAngleRiTest/"
 directory = os.fsencode(directoryname)
 
-ntht = 64
-nll = 64
+ntht = 128
+nll = 128
 
 counter = 0
 thetas = np.zeros(ntht)
@@ -75,6 +77,13 @@ plt.ylabel('$\delta$', fontsize=20)
 
 print("Maximum \delta processed: "+str(np.max(thetas[thetas!=0])*a['Bz'][-1]/(a['f']*a['Vz'][-1])))
 
-
+#%% Make Smoothed Plot
+#plt.figure()
+#data = scipy.ndimage.zoom(grn, 10)
+#sigma = .1
+#data = gaussian_filter(grn, sigma)
+#plt.contourf(data, np.linspace(0, maxc, nc),vmin=-maxc, vmax=maxc, cmap='RdBu_r', labelsize=20)
+#plt.contour(data, 
+#            np.linspace(.1, 1, 10),colors='0.5' )
 #plt.ylim((-0.1, 0.1))
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/StabilityRi1.eps', format='eps', dpi=1000)
