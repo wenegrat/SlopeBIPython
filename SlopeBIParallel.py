@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 # Global parameters
-directoryname = "/home/jacob/dedalus/SlopeAngleRi1/"
+directoryname = "/data/thomas/jacob13/STABILITY/SlopeAngleRiNV/"
 
 # Physical parameters
 f = 1e-4
@@ -37,7 +37,7 @@ Ri = 1
 Shmag = .1/H
 Bzmag = Shmag**2
 #Shmag = 0;
-thtarr = np.linspace(-2, 2, 128)*Shmag*f/Bzmag
+thtarr = np.linspace(-2, 2, 256)*Shmag*f/Bzmag
 
 #%%
 #Ri = 
@@ -46,7 +46,7 @@ thtarr = np.linspace(-2, 2, 128)*Shmag*f/Bzmag
 # Grid Parameters
 nz = 256#128#256
 
-ly_global = np.linspace(1e-2, 4.25, 128)*f/(np.sqrt(Bzmag)*H)
+ly_global = np.linspace(1e-2, 4.25, 256)*f/(np.sqrt(Bzmag)*H)
 
 # Create bases and domain
 # Use COMM_SELF so keep calculations independent between processes
