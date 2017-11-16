@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 # Global parameters
-directoryname = "/home/jacob/dedalus/SlopeAngleRiTest/"
+directoryname = "/data/thomas/jacob13/STABILITY/SlopeAngleRi1LR/"
 
 # Physical parameters
 f = 1e-4
@@ -37,16 +37,16 @@ Ri = 1
 Shmag = .1/H
 Bzmag = Shmag**2
 #Shmag = 0;
-thtarr = np.linspace(-2, 2, 128)*Shmag*f/Bzmag
-thtarr = np.linspace(-1, 2, 64)*Shmag*f/Bzmag
+thtarr = np.linspace(-2, 2, 32)*Shmag*f/Bzmag
+
 #%%
 #Ri = 
 #Shmag = 1e-4
 #Bzmag = (Shmag/Ro)**2 # Ro = Uz/N
 # Grid Parameters
-nz = 32#128#256
+nz = 128#256
 
-ly_global = np.linspace(1e-2, 4.25, 128)*f/(np.sqrt(Bzmag)*H)
+ly_global = np.linspace(1e-2, 4.25, 192)*f/(np.sqrt(Bzmag)*H)
 
 # Create bases and domain
 # Use COMM_SELF so keep calculations independent between processes
@@ -82,7 +82,7 @@ for tht in thtarr:
 
     V['g'] = Shmag*(z)/np.cos(tht)
 
-    problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p'], eigenvalue='omg', tolerance = 1e-10)
+    problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p'], eigenvalue='omg', tolerance = 1e-12)
     problem.parameters['tht'] = tht
     problem.parameters['V'] = V
     problem.parameters['Uz'] = Uz
