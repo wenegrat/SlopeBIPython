@@ -12,14 +12,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.ndimage
 from scipy.ndimage.filters import gaussian_filter
+from scipy import interpolate
 from pylab import *
 plt.rc('text', usetex=True)
 plt.rcParams.update({'font.size': 18})
-directoryname = "../SlopeAngleRiTest/"
+directoryname = "../SlopeAngleRi1/"
 directory = os.fsencode(directoryname)
 
-ntht = 128
-nll = 128
+ntht = 256
+nll = 256
 
 counter = 0
 thetas = np.zeros(ntht)
@@ -33,6 +34,7 @@ for file in os.listdir(directory):
 #        plt.semilogx(a['ll'], a['gr'])
         thetas[counter] = a['tht']
         gr[counter, :] = a['gr']#[:,-1]
+ 
         S = np.sqrt(a['Bz'][-1])/a['f']*a['tht']
 #        gr[counter, :] = gr[counter,:]/np.abs(S)**(1/2)
         counter = counter + 1
@@ -44,9 +46,26 @@ idx = np.argsort(thetas)
 thetas = thetas[idx]
 gr = gr[idx,:]
 grn =  (gr*np.sqrt(a['Bz'][-1])/(a['f']*a['Vz'][-1]))
-#grn = grn/()
-#grn = gr/a['f']
-#S = np.sqrt(a['Bz'][-1])/a['f']*thetas
+
+#grn[np.abs(grn)>0.4] = np.nan
+grnd = np.zeros(grn.shape)
+grnd[1:-1,:] = grn[1:-1,:]-grn[0:-2,:]
+grn[grnd>0.1] = np.nan
+grnd[:, 1:-1] = grn[:, 1:-1]-grn[:,0:-2]
+grn[np.abs(grnd)>0.05] = np.nan
+#grn[grn==0] = np.nan
+#valid_mask = ~np.isnan(grn)
+#coords = np.array(np.nonzero(valid_mask)).T
+#values = grn[valid_mask]
+#it = interpolate.LinearNDInterpolator(coords, values)
+#grn = it(list(np.ndindex(grn.shape))).reshape(grn.shape)
+
+array = np.ma.masked_invalid(grn)
+ll, tt = np.meshgrid(a['ll'], thetas)
+l1 = ll[~array.mask]
+t1 = tt[~array.mask]
+newg = array[~array.mask]
+grn = interpolate.griddata((l1, t1), newg.ravel(), (ll, tt))
 
 #grn = (gr*a['Bz'][-1]*a['f']/((a['f']*a['Vz'][-1])**2)*np.sqrt(np.sqrt(0.2*a['Bz'][-1]/a['f'])))
 grn = grn.astype(float)
@@ -68,7 +87,7 @@ plt.tick_params(axis='both', which='major', labelsize=fs)
 plt.clabel(CS, inline=1, fontsize = 10, fmt='%1.1f')
 #plt.contour(a['ll']*np.sqrt(a['Bz'][-1])*a['H']/a['f'], thetas*a['Bz'][-1]/(a['f']*a['Vz'][-1]), 
 #               grn,np.linspace(1e-2, .5, 10),vmin=-0.5, vmax=0.5)
-
+plt.xlim((0, 4))
 plt.xlabel('$\hat{l}$', fontsize= 20)
 plt.ylabel('$\delta$', fontsize=20)
 
@@ -80,7 +99,7 @@ print("Maximum \delta processed: "+str(np.max(thetas[thetas!=0])*a['Bz'][-1]/(a[
 #%% Make Smoothed Plot
 #plt.figure()
 #data = scipy.ndimage.zoom(grn, 10)
-#sigma = .1
+#sigma = .5
 #data = gaussian_filter(grn, sigma)
 #plt.contourf(data, np.linspace(0, maxc, nc),vmin=-maxc, vmax=maxc, cmap='RdBu_r', labelsize=20)
 #plt.contour(data, 

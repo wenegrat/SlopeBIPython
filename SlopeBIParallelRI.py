@@ -39,7 +39,7 @@ Shmag = Bzmag*tht/1e-4
 #Shmag = 1e-4
 #thtarr = np.linspace(-1.5, 1.5, 64)*Shmag*f/Bzmag
 
-Riv = np.linspace(0.01, 10, 48)
+Riv = np.linspace(0.0, 10, 48)
 #Ri = 
 #Shmag = 1e-4
 #Bzmag = (Shmag/Ro)**2 # Ro = Uz/N
@@ -84,13 +84,9 @@ for Ri in Riv:
     Bz['g'] = np.array(Bzmag*np.ones([nz]))
 #    Bt[1:nz] = integrate.cumtrapz(Bz['g']/np.cos(tht), z)
 #    B['g'] = Bt
-    
-    problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
-            'bz'], eigenvalue='omg', tolerance = 1e-10)
+    problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p'], eigenvalue='omg', tolerance = 1e-10)
     problem.parameters['tht'] = tht
-    problem.parameters['U'] = U
     problem.parameters['V'] = V
-#    problem.parameters['B'] = B
     problem.parameters['Uz'] = Uz
     problem.parameters['Vz'] = Vz
     problem.parameters['NS'] = Bz
@@ -103,35 +99,65 @@ for Ri in Riv:
     problem.substitutions['dx(A)'] = "1j*k*A"
     problem.substitutions['dy(A)'] = "1j*l*A"
     problem.substitutions['dt(A)'] = "-1j*omg*A"
-    problem.add_equation(('dt(u) + U*dx(u) + V*dy(u) + w*Uz*cos(tht) - f*v*cos(tht) + dx(p)'
-            '- b*sin(tht) - Pr*(kap*dx(dx(u)) + kap*dy(dy(u)) + dz(kap)*uz'
-            '+ kap*dz(uz)) = 0'))
-    problem.add_equation(('dt(v) + U*dx(v) + V*dy(v) + w*Vz/cos(tht) + f*u*cos(tht)'
-            '- f*w*sin(tht) + dy(p) - Pr*(kap*dx(dx(v)) + kap*dy(dy(v))'
-            '+ dz(kap)*vz + kap*dz(vz)) = 0'))
-    problem.add_equation(('(dt(w) + U*dx(w) + V*dy(w)) + f*v*sin(tht) + dz(p)'
-            '- b*cos(tht) - Pr*(kap*dx(dx(w)) + kap*dy(dy(w)) + dz(kap)*wz'
-            '+ kap*dz(wz)) = 0'))
-    problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*(Vz*f*cos(tht) + NS*sin(tht))'
-                '+ w*(NS*cos(tht) - Vz*f*sin(tht)) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
-                '- kap*dz(bz) = 0'))
-    #problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*Vz*f'
-    #        '+ w*(Bz) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
-    #        '- kap*dz(bz) = 0'))
-    problem.add_equation('dx(u) + dy(v) + wz = 0')
-    problem.add_equation('uz - dz(u) = 0')
-    problem.add_equation('vz - dz(v) = 0')
-    problem.add_equation('wz - dz(w) = 0')
-    problem.add_equation('bz - dz(b) = 0')
-    problem.add_bc('left(u) = 0')
-    problem.add_bc('left(v) = 0')
+    problem.add_equation(('dt(u) + V*dy(u) - f*v*cos(tht) + dx(p)- b*sin(tht) = 0'))
+    problem.add_equation(('dt(v) + V*dy(v) + w*Vz/cos(tht) + f*u*cos(tht)- f*w*sin(tht) + dy(p) = 0'))
+    problem.add_equation(('(dt(w) + V*dy(w)) + f*v*sin(tht) + dz(p)- b*cos(tht) = 0'))
+    problem.add_equation(('dt(b) +  V*dy(b) + u*(NS*sin(tht)+f*Vz*cos(tht))'
+            '+ w*(NS*cos(tht)-f*Vz*sin(tht)) = 0'))
+    problem.add_equation('dx(u) + dy(v) + dz(w) = 0')
+
     problem.add_bc('left(w) = 0')
-    problem.add_bc('left(bz) = 0')
-    problem.add_bc('right(uz) = 0')
-    problem.add_bc('right(vz) = 0')
     problem.add_bc('right(w) = 0')
-#    problem.add_bc('right(w) = 1/10*(dt(right(p)) + right(u)*dx(right(p))+right(v)*dy(right(p)))')
-    problem.add_bc('right(bz) = 0')
+
+    
+    
+#    problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
+#            'bz'], eigenvalue='omg', tolerance = 1e-10)
+#    problem.parameters['tht'] = tht
+#    problem.parameters['U'] = U
+#    problem.parameters['V'] = V
+##    problem.parameters['B'] = B
+#    problem.parameters['Uz'] = Uz
+#    problem.parameters['Vz'] = Vz
+#    problem.parameters['NS'] = Bz
+#    problem.parameters['f'] = f
+#    problem.parameters['tht'] = tht
+#    problem.parameters['kap'] = kap
+#    problem.parameters['Pr'] = Pr
+#    problem.parameters['k'] = 0. # will be set in loop
+#    problem.parameters['l'] = 0. # will be set in loop
+#    problem.substitutions['dx(A)'] = "1j*k*A"
+#    problem.substitutions['dy(A)'] = "1j*l*A"
+#    problem.substitutions['dt(A)'] = "-1j*omg*A"
+#    problem.add_equation(('dt(u) + U*dx(u) + V*dy(u) + w*Uz*cos(tht) - f*v*cos(tht) + dx(p)'
+#            '- b*sin(tht) - Pr*(kap*dx(dx(u)) + kap*dy(dy(u)) + dz(kap)*uz'
+#            '+ kap*dz(uz)) = 0'))
+#    problem.add_equation(('dt(v) + U*dx(v) + V*dy(v) + w*Vz/cos(tht) + f*u*cos(tht)'
+#            '- f*w*sin(tht) + dy(p) - Pr*(kap*dx(dx(v)) + kap*dy(dy(v))'
+#            '+ dz(kap)*vz + kap*dz(vz)) = 0'))
+#    problem.add_equation(('(dt(w) + U*dx(w) + V*dy(w)) + f*v*sin(tht) + dz(p)'
+#            '- b*cos(tht) - Pr*(kap*dx(dx(w)) + kap*dy(dy(w)) + dz(kap)*wz'
+#            '+ kap*dz(wz)) = 0'))
+#    problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*(Vz*f*cos(tht) + NS*sin(tht))'
+#                '+ w*(NS*cos(tht) - Vz*f*sin(tht)) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
+#                '- kap*dz(bz) = 0'))
+#    #problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*Vz*f'
+#    #        '+ w*(Bz) - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
+#    #        '- kap*dz(bz) = 0'))
+#    problem.add_equation('dx(u) + dy(v) + wz = 0')
+#    problem.add_equation('uz - dz(u) = 0')
+#    problem.add_equation('vz - dz(v) = 0')
+#    problem.add_equation('wz - dz(w) = 0')
+#    problem.add_equation('bz - dz(b) = 0')
+#    problem.add_bc('left(u) = 0')
+#    problem.add_bc('left(v) = 0')
+#    problem.add_bc('left(w) = 0')
+#    problem.add_bc('left(bz) = 0')
+#    problem.add_bc('right(uz) = 0')
+#    problem.add_bc('right(vz) = 0')
+#    problem.add_bc('right(w) = 0')
+##    problem.add_bc('right(w) = 1/10*(dt(right(p)) + right(u)*dx(right(p))+right(v)*dy(right(p)))')
+#    problem.add_bc('right(bz) = 0')
     
     solver = problem.build_solver()
     
