@@ -97,3 +97,13 @@ plt.annotate(r'SI/CI',
 #plt.colorbar()
 
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/RegimeDiagram.eps', format='eps', dpi=1000)
+
+#%%
+phi = 1/2*np.arctan( (2*Pr*Rif**(-1/2))/(1 - Pr**2*(1-delta/Rif))) 
+phit = 1/2*( (2*Pr*Rif**(-1/2))/(1 - Pr**2*(1-delta/Rif)))
+plt.contourf(Ri, S, phi)
+plt.colorbar()
+
+plt.figure()
+plt.plot(np.tan(phi[1,:]))
+plt.plot(phit[1,:])
