@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 # Global parameters
-directoryname = "/home/jacob/dedalus/EkmanGamma/"
+directoryname = "/data/thomas/jacob13/STABILITY/EkmanGammaBI/"
 
 # Physical parameters
 f = 1e-4
@@ -38,17 +38,17 @@ theta = 5e-3
 So = (No/f*np.tan(theta))**2
 gc = (1+So)**(-1)
 
-gammas = np.linspace(0.33, 1, 64)
+gammas = np.linspace(0.5, 1, 128)
 #Shmag = 0;
 
 #Ri = 
 #Shmag = 1e-4
 #Bzmag = (Shmag/Ro)**2 # Ro = Uz/N
 # Grid Parameters
-nz = 64#256
+nz = 256
 
-ly_global = np.linspace(1e-4, 1e-2, 64)
-ly_global = np.logspace(-4, -2, 128)
+ly_global = np.linspace(1e-2*(f/Vob), 5*(f/Vob), 256)
+#ly_global = np.logspace(-4, -2, 256)
 # Create bases and domain
 # Use COMM_SELF so keep calculations independent between processes
 z_basis = de.Chebyshev('z', nz, interval=(0,H))
@@ -58,12 +58,12 @@ z = domain.grid(0)
 
 # Define Stability Analysis Parameters
 
-kap = domain.new_field(name='kap')
-kap['g'] = 1e-5*np.ones(z.shape)
-U = domain.new_field(name='U')
-U['g'] = 0*z
-Uz = domain.new_field(name='Uz')
-Uz['g'] = 0*z
+#kap = domain.new_field(name='kap')
+#kap['g'] = 1e-5*np.ones(z.shape)
+#U = domain.new_field(name='U')
+#U['g'] = 0*z
+#Uz = domain.new_field(name='Uz')
+#Uz['g'] = 0*z
 V = domain.new_field(name='V')
 Vz = domain.new_field(name='Vz')
 Bz = domain.new_field(name='Bz')
@@ -115,6 +115,7 @@ for gamma in gammas:
     problem.parameters['V'] = V
     problem.parameters['Vz'] = Vz
     problem.parameters['NS'] = Bz
+    problem.parameters['No'] = No
     problem.parameters['f'] = f
     problem.parameters['k'] = 0. # will be set in loop
     problem.parameters['l'] = 0. # will be set in loop
@@ -123,14 +124,14 @@ for gamma in gammas:
     problem.substitutions['dt(A)'] = "-1j*omg*A"
 
     problem.add_equation(('dt(u) + V*dy(u) - f*v*cos(tht) + dx(p)- b*sin(tht) = 0'))
-    problem.add_equation(('dt(v) + V*dy(v) + w*Vz/cos(tht) + f*u*cos(tht)- f*w*sin(tht) + dy(p) = 0'))
+    problem.add_equation(('dt(v) + V*dy(v) + w*Vz + f*u*cos(tht)- f*w*sin(tht) + dy(p) = 0'))
     problem.add_equation(('(dt(w) + V*dy(w)) + f*v*sin(tht) + dz(p)- b*cos(tht) = 0'))
-    problem.add_equation(('dt(b) +  V*dy(b) + u*(NS*sin(tht)+f*Vz*cos(tht))'
-            '+ w*(NS*cos(tht)-f*Vz*sin(tht)) = 0'))
+    problem.add_equation(('dt(b) +  V*dy(b) + u*(No**2*sin(tht))'
+            '+ w*(NS) = 0'))
     problem.add_equation('dx(u) + dy(v) + dz(w) = 0')
 
     problem.add_bc('left(w) = 0')
-    problem.add_bc('right(w) = 0')
+    problem.add_bc('right(w) = -right(u)*tan(tht)')
 #    problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
 #            'bz'], eigenvalue='omg', tolerance = 1e-10)
 #    problem.parameters['tht'] = theta
