@@ -47,10 +47,10 @@ SICRIT = (1/Rif)*(1+delta)>1
 VSHS = (1/delta)*(1-Pr*(1-delta/Rif))**(-1) > 1
 CCRIT = delta/Rif > 1
 maskSI = np.nan*np.zeros((Rif.shape))
-maskSI[VSHS&SICRIT] = 3
+maskSI[VSHS&SICRIT] = 1
 maskCI = np.nan*np.zeros((Rif.shape))
 #VSHSn = not VSHS
-maskCI[CCRIT& np.logical_not(VSHS)] = 2
+maskCI[CCRIT& np.logical_not(VSHS)] = 1
 
 maskMI = np.nan*np.zeros((Rif.shape))
 maskMI[SICRIT& np.logical_not(VSHS)&np.logical_not(CCRIT)] = 1
@@ -62,14 +62,17 @@ maskVS[SICRIT] = 1
 #maskSI[maskSI!=1] = NaN
 cl = 8
 plt.figure()
-plt.contourf(Ri, S, maskSI, np.linspace(0, cl, 10), cmap='Greys')
-plt.contourf(Ri, S, maskCI, np.linspace(0,cl, 10), cmap='Greys')
-plt.contourf(Ri, S, maskMI, np.linspace(0, cl, 10), cmap='Greys')
-plt.contourf(Ri, S, maskPV*(delta<2)*4, np.linspace(0, cl, 10), cmap='Greys')
+plt.contourf(Ri, S, maskSI*4, np.linspace(0, cl, 10), cmap='Greys')
+plt.contourf(Ri, S, maskCI*3, np.linspace(0,cl, 10), cmap='Greys')
+plt.contourf(Ri, S, maskMI*2, np.linspace(0, cl, 10), cmap='Greys')
+plt.contourf(Ri, S, maskPV*1, np.linspace(0, cl, 10), cmap='Greys')
 plt.contour(Ri, S,delta/Rif, levels=[1], colors='green', linestyles='dashed') 
-plt.contour(Ri, S,delta*maskPV, levels=[1, 2], colors='k', linestyles='dotted')
+CL = plt.contour(Ri, S,delta*maskPV, levels=[1, 2], colors='k', linestyles='dotted')
+plt.clabel(CL, inline=1, fontsize = 12, fmt='$\delta$ $=$ %1.0f')
 plt.contour(Ri, S,SICI*maskVS, levels=[1], colors='b', linestyles='dashed')
 plt.contour(Ri, S,(1/Rif)*(1+delta), levels=[1], colors='r', linestyles='dashed')
+plt.plot(1.25, 2.75, marker='x', color='k')
+plt.plot(0.5, 0.1, marker='x', color='k')
 plt.xlabel('Ri')
 plt.ylabel('S')
 
@@ -99,6 +102,7 @@ plt.annotate(r'SI/CI',
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/RegimeDiagram.eps', format='eps', dpi=1000)
 
 #%%
+plt.figure()
 phi = 1/2*np.arctan( (2*Pr*Rif**(-1/2))/(1 - Pr**2*(1-delta/Rif))) 
 phit = 1/2*( (2*Pr*Rif**(-1/2))/(1 - Pr**2*(1-delta/Rif)))
 plt.contourf(Ri, S, phi)
