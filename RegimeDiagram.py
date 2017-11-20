@@ -10,10 +10,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rc('text', usetex=True)
 
-ns = 100
-nri = 200
-maxr = 10
-maxs = 3
+ns = 200
+nri = 400
+maxr = 5
+maxs = 2
 S = np.linspace(0, maxs, ns)
 Ri =np.transpose(np.linspace(0, maxr, nri))
 Rif = np.zeros((ns, nri))
@@ -71,8 +71,8 @@ CL = plt.contour(Ri, S,delta*maskPV, levels=[1, 2], colors='k', linestyles='dott
 plt.clabel(CL, inline=1, fontsize = 12, fmt='$\delta$ $=$ %1.0f')
 plt.contour(Ri, S,SICI*maskVS, levels=[1], colors='b', linestyles='dashed')
 plt.contour(Ri, S,(1/Rif)*(1+delta), levels=[1], colors='r', linestyles='dashed')
-plt.plot(1.25, 2.75, marker='x', color='k')
-plt.plot(0.5, 0.1, marker='x', color='k')
+#plt.plot(1.25, 2.75, marker='x', color='k')
+#plt.plot(0.5, 0.1, marker='x', color='k')
 plt.xlabel('Ri')
 plt.ylabel('S')
 
@@ -83,11 +83,18 @@ plt.annotate(r'SI',
              xy=(0.75, 0.35), xycoords='data', xytext=(+0, +0), 
              textcoords='offset points', fontsize=16)
 plt.annotate(r'CI',
-             xy=(1, 2.25), xycoords='data', xytext=(+0, +0), 
+             xy=(.95, 1.65), xycoords='data', xytext=(+0, +0), 
              textcoords='offset points', fontsize=16)
 plt.annotate(r'SI/CI',
-             xy=(2, 1.65), xycoords='data', xytext=(+0, +0), 
+             xy=(1.75, 1.25), xycoords='data', xytext=(+0, +0), 
              textcoords='offset points', fontsize=16)
+maskPVNum = np.nan*np.zeros(LSP.shape)
+maskPVNum[PV<0] = 1
+maskPVNum[CI<1] = np.nan
+plt.contour(rivec, svec, np.transpose(LSP/VSP*maskPVNum), levels=[1], colors='b')
+
+#plt.ylim((0, 3))
+#plt.xlim((0, 10))
 #plt.colorbar()
 #plt.contour(Ri, S,Rif*(1-delta/Rif), levels=[1], colors='k', linestyles='dashed')
 
@@ -99,15 +106,16 @@ plt.annotate(r'SI/CI',
 #plt.ylabel('S')
 #plt.colorbar()
 
-#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/RegimeDiagram.eps', format='eps', dpi=1000)
+plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/RegimeDiagram.eps', format='eps', dpi=1000)
 
 #%%
 plt.figure()
 phi = 1/2*np.arctan( (2*Pr*Rif**(-1/2))/(1 - Pr**2*(1-delta/Rif))) 
 phit = 1/2*( (2*Pr*Rif**(-1/2))/(1 - Pr**2*(1-delta/Rif)))
-plt.contourf(Ri, S, phi)
+plt.contourf(Ri, S, (1/delta)*(1-Pr*(1-delta/Rif))**(-1), np.linspace(0, 5, 20))
 plt.colorbar()
-
-plt.figure()
-plt.plot(np.tan(phi[1,:]))
-plt.plot(phit[1,:])
+plt.ylim((0,2))
+plt.xlim((0, 5))
+#plt.figure()
+#plt.plot(np.tan(phi[1,:]))
+#plt.plot(phit[1,:])
