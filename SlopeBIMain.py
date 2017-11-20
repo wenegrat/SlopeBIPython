@@ -9,6 +9,11 @@ Main Script Compiled to Keep Track of Different Functions
 
 # PARAMETER SPACE EXPLORATION
 QGPlots.py # Makes the Mechoso 1980 plots of growth rate vs. delta for the QG limit.
+
+SIRegimeScan.py # Scan SI/CI parameter space for energetics.
+SIRegimeScanPlot.py # Load output of above, make some plots (not used)
+RegimeDiagram.py # Make the regime diagram
+
 SlopeBIParallelStone.py # Calculates growth rates varying theta (delta) for fixed N2, Uz
 SlopeSIParallel.py # Calculates growth rates for symmetric mode varying theta (delta)
 StabilityContour.py # Plots for the above stability calculations.
