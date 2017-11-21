@@ -15,7 +15,6 @@ SIRegimeScanPlot.py # Load output of above, make some plots (not used)
 RegimeDiagram.py # Make the regime diagram
 
 SlopeBIParallelStone.py # Calculates growth rates varying theta (delta) for fixed N2, Uz
-SlopeSIParallel.py # Calculates growth rates for symmetric mode varying theta (delta)
 StabilityContour.py # Plots for the above stability calculations.
 
 SlopeBIParallelRi.py # Calculates growth rate at fixed theta, N2 and varying Ri
@@ -44,3 +43,4 @@ EkmanSolverForward.py # Integrates the 1D BBL Ekman problem forward in time, sav
 SlopeBIParallelEkman.py # Uses output of EkmanSolverForward to calculate and save growth rates (call mpiexec -n 20 python3 ...)
 StabilityPlotsEkman.py # Loads the output of SlopeBIParallelEkman and makes some plots
 AllenBLStructure.py # Basic code to calculate BL flow and N2 structure based on Allen and Newberger 1998
+SlopeSIParallel.py # Calculates growth rates for symmetric mode varying theta (delta)
