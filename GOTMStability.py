@@ -1,52 +1,46 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-Dedalus script for calculating the maximum growth rates in no-slip
-Rayleigh Benard convection over a range of horizontal wavenumbers.
+Created on Tue Nov 21 13:50:30 2017
 
-This script can be ran serially or in parallel, and produces a plot of the
-highest growth rate found for each horizontal wavenumber.
-
-To run using 4 processes, for instance, you could use:
-    $ mpiexec -n 4 python3 rayleigh_benard.py
-
+@author: jacob
 """
-
 import time
+
+from netCDF4 import Dataset
 import numpy as np
 import matplotlib.pyplot as plt
 import dedalus.public as de
 from mpi4py import MPI
 CW = MPI.COMM_WORLD
-from pylab import *
 import scipy.integrate as integrate
-import os
 
 import logging
 logger = logging.getLogger(__name__)
 
+pathtofile = '/home/jacob/GOTM/cases/slope/entrainment.nc'
+pathtosave = '/home/jacob/dedalus/GOTMEkman/'
 
-# Global parameters
-directoryname = "/home/jacob/Dropbox/Slope BI/EkmanUpFiles/"
-directory = os.fsencode(directoryname)
+nc_fid = Dataset(pathtofile, 'r')  # Dataset is the class behavior to open the file
 
-directorynameout = "/home/jacob/dedalus/SlopeEkmanUp/"
+bg = np.squeeze(nc_fid.variables['buoy'][:])
+ug = np.squeeze(nc_fid.variables['u'][:])
+vg = np.squeeze(nc_fid.variables['v'][:])
+kappag = np.squeeze(nc_fid.variables['nuh'][:])
+nug = np.squeeze(nc_fid.variables['num'][:])
+nng = np.squeeze(nc_fid.variables['NN'][:])
+ntg, nzg = vg.shape
+zg = np.linspace(0.25, 147.75, 300)
+ts = 3600
 
-# Physical parameters
+# STABILITY PARAMETERS
 f = 1e-4
-Pr = 1
-H = 100
-Ri = 1
-Bzmag = 1.225e-5
-Shmag = np.sqrt(Bzmag/Ri)
-thtarr = np.linspace(-1.5, 1.5, 64)*Shmag*f/Bzmag
+tht = 5e-3
+Nb = np.sqrt(1e-5)
+H = 300
+nz = 32#256
 
-#Ri = 
-#Shmag = 1e-4
-#Bzmag = (Shmag/Ro)**2 # Ro = Uz/N
-# Grid Parameters
-nz = 64#256
-
-ly_global = np.linspace(1e-2, 30, 64)*f/(np.sqrt(Bzmag)*H)
-
+ly_global = np.logspace(-4, -1, 32)
 # Create bases and domain
 # Use COMM_SELF so keep calculations independent between processes
 z_basis = de.Chebyshev('z', nz, interval=(0,H))
@@ -57,6 +51,7 @@ z = domain.grid(0)
 # Define Stability Analysis Parameters
 
 kap = domain.new_field(name='kap')
+nu = domain.new_field(name='nu')
 U = domain.new_field(name='U')
 Uz = domain.new_field(name='Uz')
 #Uz['g'] = 0*z
@@ -65,31 +60,23 @@ Vz = domain.new_field(name='Vz')
 Bz = domain.new_field(name='Bz')
 B = domain.new_field(name='B')
 
-#Vz['g'] = Shmag*(z-z+1) #Note this assumes no horizotal variation (ie. won't work for the non-uniform case)
-Bt = np.zeros([nz])
-Bz['g'] = np.array(Bzmag*np.ones([nz]))
-Bt[1:nz] = integrate.cumtrapz(Bz['g'], z)
-B['g'] = Bt
-
-# 2D Boussinesq hydrodynamics, with no-slip boundary conditions
-# Use substitutions for x and t derivatives
-
-for file in os.listdir(directory):
-    filename = os.fsdecode(file)
-    print(filename)
-    if filename.endswith(".npz"): 
-        a = np.load(directoryname+filename);
+for i in range(0, ntg, 24):
     
-    tht = np.float(a['tht'])
     problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
             'bz'], eigenvalue='omg', tolerance = 1e-10)
-    kap['g'] = np.interp(z,a['z'], a['kap'])
-    U['g'] = np.interp(z,a['z'], a['u'])
+    kap['g'] = np.interp(z,zg, kappag[i,1:])
+    nu['g'] = np.interp(z, zg, nug[i,1:])
+    U['g'] = np.interp(z,zg, ug[i,:])
     Uz  = U.differentiate(z_basis)
-    V['g'] = np.interp(z, a['z'], a['v']+a['V'])
+    V['g'] = np.interp(z, zg, vg[i,:])
     Vz = V.differentiate(z_basis)
-    B['g'] = np.interp(z, a['z'], a['b'] + a['N']**2*a['z']*np.cos(tht))
+    B['g'] = np.interp(z, zg, bg[i,:])
     Bz = B.differentiate(z_basis)
+    Bz['g'] = np.interp(z, zg[0:-10], nng[i,0:-10])
+    
+    Bt = np.zeros([nz])
+    Bt[1:nz] = integrate.cumtrapz(Bz['g'], z)
+    B['g'] = Bt - Bt[-1]
     
     problem.parameters['tht'] = tht
     problem.parameters['U'] = U
@@ -98,27 +85,24 @@ for file in os.listdir(directory):
     problem.parameters['Uz'] = Uz
     problem.parameters['Vz'] = Vz
     problem.parameters['Bz'] = Bz
-    problem.parameters['N'] = np.float(a['N'])
-    problem.parameters['f'] = np.float(a['f'])
+    problem.parameters['N'] =Nb
+    problem.parameters['f'] = f
     problem.parameters['kap'] = kap
-    problem.parameters['Pr'] = Pr
+    problem.parameters['nu'] = nu
     problem.parameters['k'] = 0. # will be set in loop
     problem.parameters['l'] = 0. # will be set in loop
     problem.substitutions['dx(A)'] = "1j*k*A"
     problem.substitutions['dy(A)'] = "1j*l*A"
     problem.substitutions['dt(A)'] = "-1j*omg*A"
     problem.add_equation(('dt(u) + U*dx(u) + V*dy(u) + w*Uz - f*v*cos(tht) + dx(p)'
-            '- b*sin(tht) - Pr*(kap*dx(dx(u)) + kap*dy(dy(u)) + dz(kap)*uz'
-            '+ kap*dz(uz)) = 0'))
+            '- b*sin(tht) - (dz(nu)*uz'
+            '+ nu*dz(uz)) = 0'))
     problem.add_equation(('dt(v) + U*dx(v) + V*dy(v) + w*Vz + f*u*cos(tht)'
-            '- f*w*sin(tht) + dy(p) - Pr*(kap*dx(dx(v)) + kap*dy(dy(v))'
-            '+ dz(kap)*vz + kap*dz(vz)) = 0'))
+            '- f*w*sin(tht) + dy(p) - (dz(nu)*vz + nu*dz(vz)) = 0'))
     problem.add_equation(('(dt(w) + U*dx(w) + V*dy(w)) + f*v*sin(tht) + dz(p)'
-            '- b*cos(tht) - Pr*(kap*dx(dx(w)) + kap*dy(dy(w)) + dz(kap)*wz'
-            '+ kap*dz(wz)) = 0'))
+            '- b*cos(tht) - (dz(nu)*wz + nu*dz(wz)) = 0'))
     problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*N**2*sin(tht)'
-                '+ w*Bz - kap*dx(dx(b)) - kap*dy(dy(b)) - dz(kap)*bz'
-                '- kap*dz(bz) = 0'))
+                '+ w*Bz - dz(kap)*bz - kap*dz(bz) = 0'))
     problem.add_equation('dx(u) + dy(v) + wz = 0')
     problem.add_equation('uz - dz(u) = 0')
     problem.add_equation('vz - dz(v) = 0')
@@ -171,7 +155,8 @@ for file in os.listdir(directory):
     # Plot growth rates from root process
     if CW.rank == 0:
         
-#        name = 'StabilityData_'+str(tht) # Can vary this depending on parameter of interest
-        np.savez(directorynameout+filename, nz=nz, tht=tht, z=z, f=f, kap=kap['g'], Pr=Pr, U=U['g'],
-        V=V['g'], B=B['g'], Bz=Bz['g'], N = a['N'], Vz=Vz['g'], H = H, ll=ly_global, time=i*ts,
+        name = 'StabilityData_'+str(i) # Can vary this depending on parameter of interest
+        np.savez(pathtosave+name, nz=nz, tht=tht, z=z, f=f, kap=kap['g'], nu=nu['g'], U=U['g'],
+        V=V['g'], B=B['g'], Bz=Bz['g'], N = Nb, Vz=Vz['g'], H = H, ll=ly_global, time=i*ts,
         gr=growth_global)
+        

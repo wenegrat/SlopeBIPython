@@ -106,7 +106,7 @@ plt.contour(rivec, svec, np.transpose(LSP/VSP*maskPVNum), levels=[1], colors='b'
 #plt.ylabel('S')
 #plt.colorbar()
 
-plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/RegimeDiagram.eps', format='eps', dpi=1000)
+#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/RegimeDiagram.eps', format='eps', dpi=1000)
 
 #%%
 plt.figure()

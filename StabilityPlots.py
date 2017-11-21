@@ -16,7 +16,7 @@ directoryname = "../DeepShallowModes/"
 directory = os.fsencode(directoryname)
 
 ntht = 5
-nll = 128
+nll = 256
 
 plt.figure(figsize=(4.8, 4.8))
 counter = 0

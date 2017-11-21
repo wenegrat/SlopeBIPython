@@ -16,11 +16,11 @@ import scipy.integrate as integrate
 
 plt.rc('text', usetex=True)
 plt.rcParams.update({'font.size': 18})
-directoryname = "../SIRegimeScan1/"
+directoryname = "../SIRegimeScan/"
 directory = os.fsencode(directoryname)
 
-nri = 32
-ns = 32
+nri = 64
+ns = 64
 
 counter = 0
 rivec = np.linspace(1e-2, 5, nri)
