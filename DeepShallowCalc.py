@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 # Global parameters
-directoryname = "/home/jacob/dedalus/DeepShallowModes/"
+directoryname = "/data/thomas/jacob13/STABILITY/DEEPSHALLOW/DeepShallowModes/"
 
 # Physical parameters
 f = 1e-4
@@ -47,10 +47,10 @@ thtarr = np.linspace(0, 1e-2, 5)
 #Shmag = 1e-4
 #Bzmag = (Shmag/Ro)**2 # Ro = Uz/N
 # Grid Parameters
-nz = 128#256
+nz = 256
 
 ly_global = np.linspace(1e-4, 1e-2, 64)
-ly_global = np.logspace(-4, -2, 128)
+ly_global = np.logspace(-4, -2, 256)
 # Create bases and domain
 # Use COMM_SELF so keep calculations independent between processes
 z_basis = de.Chebyshev('z', nz, interval=(0,H))
@@ -78,6 +78,7 @@ zind = np.floor( next((x[0] for x in enumerate(z) if x[1]>BLH)))
 #Bz['g'][0:zind] = BzmagBL
 
 tpoint = np.floor( next((x[0] for x in enumerate(z) if x[1]>BLH)))
+tpoint = int(tpoint)
 Bstr  = -0.5*(np.tanh((-z + z[tpoint])/40)+1)
 Bz['g'] = Bz['g']*10**(2*Bstr)
     
@@ -116,7 +117,7 @@ for tht in thtarr:
     problem.add_equation('dx(u) + dy(v) + dz(w) = 0')
 
     problem.add_bc('left(w) = 0')
-    problem.add_bc('right(w) = -u*tan(tht)')
+    problem.add_bc('right(w) = -right(u)*tan(tht)')
 
 
 #    problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
