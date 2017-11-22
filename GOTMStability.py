@@ -18,8 +18,8 @@ import scipy.integrate as integrate
 import logging
 logger = logging.getLogger(__name__)
 
-pathtofile = '/home/jacob/GOTM/cases/slope/entrainment.nc'
-pathtosave = '/home/jacob/dedalus/GOTMEkman/'
+pathtofile = '/data/thomas/jacob13/STABILITY/GOTMOUT/entrainment.nc'
+pathtosave = '/data/thomas/jacob13/STABILITY/GOTMEkman/'
 
 nc_fid = Dataset(pathtofile, 'r')  # Dataset is the class behavior to open the file
 
@@ -38,9 +38,9 @@ f = 1e-4
 tht = 5e-3
 Nb = np.sqrt(1e-5)
 H = 300
-nz = 32#256
+nz = 128#256
 
-ly_global = np.logspace(-4, -1, 32)
+ly_global = np.logspace(-4, -1, 128)
 # Create bases and domain
 # Use COMM_SELF so keep calculations independent between processes
 z_basis = de.Chebyshev('z', nz, interval=(0,H))
