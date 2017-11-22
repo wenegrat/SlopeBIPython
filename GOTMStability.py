@@ -35,8 +35,8 @@ ts = 3600
 
 # STABILITY PARAMETERS
 f = 1e-4
-tht = 5e-3
-Nb = np.sqrt(1e-5)
+tht = 1e-2
+Nb = (3.5e-3)
 H = 150
 nz = 32#256
 
@@ -140,7 +140,7 @@ for i in range(0, ntg, 12):
 
         """Finds maximum growth rate for given wavenumbers k, l."""
         k = 0
-        print(k, l)
+        #print(k, l)
 
         # solve eigenvalue problem and sort
         idx = sorted_eigen(k, l)
@@ -184,7 +184,7 @@ for i in range(0, ntg, 12):
         # buoyancy production
         BP = 2*np.real((up['g']*np.sin(tht)+wp['g']*np.cos(tht))*np.conj(bp['g']))
         
-        DISS = -2*np.real(nu['g']*(uzp**2 + vzp**2))
+        DISS = -2*np.real(nu['g']*(np.conj(uzp['g'])*uzp['g'] + np.conj(vzp['g'])*vzp['g']))
         
         name = 'StabilityData_'+str(i) # Can vary this depending on parameter of interest
         np.savez(pathtosave+name, nz=nz, tht=tht, z=z, f=f, kap=kap['g'], nu=nu['g'], U=U['g'],

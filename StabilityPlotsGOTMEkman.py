@@ -11,6 +11,7 @@ import numpy as np
 import scipy.integrate as integrate
 import matplotlib.pyplot as plt
 from pylab import *
+import glob
 
 nll = 32
 
@@ -24,8 +25,19 @@ time = (np.zeros(np.array(os.listdir(directory)).shape))
 wave = (np.zeros(np.array(os.listdir(directory)).shape))
 trans = (np.zeros(np.array(os.listdir(directory)).shape))
 
-for file in sorted(os.listdir(directory)):
-    filename = os.fsdecode(file)
+def keyfunc(x):
+    junk, nend = x.split('_')
+    num, dot, ty = nend.partition('.')
+    return int(num)
+
+listd = os.listdir(directory)
+
+dirfiles = sorted(glob.glob(directoryname+'*.npz'), key=keyfunc)
+#dirfiles = dirfiles[0:5]
+#dirfiles.sort(key=lambda f:int(''.join(filter(str.isdigit, f))) )
+grf = np.nan*np.zeros((len(dirfiles), nll))
+for filename in dirfiles:
+#    filename = os.fsdecode(file)
     print(filename)
     if filename.endswith(".npz"): 
         a = np.load(directoryname+filename);
@@ -33,7 +45,7 @@ for file in sorted(os.listdir(directory)):
 
             
         
-        if a['gr'][0]/a['f']<0.05:
+        if a['gr'][0]/a['f']<100:
             plt.plot(a['ll'], a['gr']/a['f'])
 
             plt.xlabel('along-track wavenumber [m$^{-1}$]')
@@ -47,6 +59,7 @@ for file in sorted(os.listdir(directory)):
             time[counter] = a['time'].item(0)
             ind = np.argsort(a['gr'])
             wave[counter] = a['ll'][ind[-1]]
+            grf[counter,:] = a['gr']
         counter = counter + 1
         continue
     else:
@@ -66,7 +79,7 @@ ax[0].plot(time*a['f']/(2*np.pi), grt/a['f'], marker="x", linestyle='None')
 ax[0].plot(time*a['f']/(2*np.pi), 2*np.pi/(ttheory)*1/a['f'], marker="+", linestyle='None')
 #ax[0].set_ylim(0, 0.3)
 ax[0].set_ylabel('$\omega$/f')
-#ax[0].set_ylim((-2,2))
+ax[0].set_ylim((0,0.5))
 ax[0].grid()
 #    
 ax[1].plot(time*a['f']/(2*np.pi), trans)
@@ -106,43 +119,58 @@ ax[2].set_xlabel('mean buoyancy [m/s$^2$]', va='baseline')
 ax[2].get_xaxis().set_label_coords(.5, -.12)
 
 #%%
+plt.figure()
+plt.plot(Ri, z)
+plt.ylim((0,100))
+plt.xlim((-1, 1))
+
+#%%
 z = a['z']    
 
-plt.figure()
-plt.plot(a['b']*a['w'], z)
+#plt.figure()
+#plt.plot(a['b']*a['w'], z)
 #
 ## Make Energetics Plot
-#plt.figure(figsize=(4.8, 4.8))
-#plt.plot(a['SP'], z)
-#plt.plot(a['BP'], z)
-#plt.xlabel('kinetic energy tendency [m$^2$/s$^3$]')
-#plt.ylabel('slope-normal coordinate [m]')
-#plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-#plt.legend(['shear production', 'buoyancy production'], frameon=False)
-#plt.tight_layout()
+plt.figure(figsize=(4.8, 4.8))
+plt.plot(a['SP'], z)
+plt.plot(a['BP'], z)
+plt.plot(a['DISS'], z)
+plt.xlabel('kinetic energy tendency [m$^2$/s$^3$]')
+plt.ylabel('slope-normal coordinate [m]')
+plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
+plt.legend(['shear production', 'buoyancy production', 'Dissipation'], frameon=False)
+plt.tight_layout()
+plt.ylim((0, 100))
 #
 ## Make Structure Plot
 #ly = np.linspace(0, 2*np.pi, a['nz'])
 #
-#fig, ax = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(6.4, 6.4))
-#im = ax[0,0].pcolormesh(ly, z, np.real(a['u'].reshape(a['nz'], 1)
-#        * np.exp(1j*ly.reshape(1,a['nz']))), rasterized=True, cmap='RdBu_r')
-#plt.colorbar(im, ax=ax[0,0])
-#ax[0,0].set_title('across-slope velocity')
-#im = ax[0,1].pcolormesh(ly, z, np.real(a['v'].reshape(a['nz'], 1)
-#        * np.exp(1j*ly.reshape(1,a['nz']))), rasterized=True, cmap='RdBu_r')
-#plt.colorbar(im, ax=ax[0,1])
-#ax[0,1].set_title('along-slope velocity')
-#im = ax[1,0].pcolormesh(ly, z, np.real(a['w'].reshape(a['nz'], 1)
-#        * np.exp(1j*ly.reshape(1,a['nz']))), rasterized=True, cmap='RdBu_r')
-#plt.colorbar(im, ax=ax[1,0])
-#ax[1,0].set_title('slope-normal velocity')
-#im = ax[1,1].pcolormesh(ly, z, np.real(a['b'].reshape(a['nz'], 1)
-#        * np.exp(1j*ly.reshape(1,a['nz']))), rasterized=True, cmap='RdBu_r')
-#plt.colorbar(im, ax=ax[1,1])
-#ax[1,1].set_title('buoyancy')
-#ax[0,0].set_xticks([0, np.pi, 2*np.pi])
-#ax[1,0].set_xlabel('phase')
-#ax[1,1].set_xlabel('phase')
-#ax[0,0].set_ylabel('slope-normal coordinate [m]')
-#ax[1,0].set_ylabel('slope-normal coordinate [m]')
+nz = z.shape[0]
+ly = np.linspace(0, 2*np.pi, nz)
+fig, ax = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(6.4, 6.4))
+im = ax[0,0].pcolormesh(ly, z, np.real(a['u'].reshape(a['nz'], 1)
+        * np.exp(1j*ly.reshape(1,a['nz']))), rasterized=True, cmap='RdBu_r')
+plt.colorbar(im, ax=ax[0,0])
+ax[0,0].set_title('across-slope velocity')
+im = ax[0,1].pcolormesh(ly, z, np.real(a['v'].reshape(a['nz'], 1)
+        * np.exp(1j*ly.reshape(1,a['nz']))), rasterized=True, cmap='RdBu_r')
+plt.colorbar(im, ax=ax[0,1])
+ax[0,1].set_title('along-slope velocity')
+im = ax[1,0].pcolormesh(ly, z, np.real(a['w'].reshape(a['nz'], 1)
+        * np.exp(1j*ly.reshape(1,a['nz']))), rasterized=True, cmap='RdBu_r')
+plt.colorbar(im, ax=ax[1,0])
+ax[1,0].set_title('slope-normal velocity')
+im = ax[1,1].pcolormesh(ly, z, np.real(a['b'].reshape(a['nz'], 1)
+        * np.exp(1j*ly.reshape(1,a['nz']))), rasterized=True, cmap='RdBu_r')
+plt.colorbar(im, ax=ax[1,1])
+ax[1,1].set_title('buoyancy')
+ax[0,0].set_xticks([0, np.pi, 2*np.pi])
+ax[1,0].set_xlabel('phase')
+ax[1,1].set_xlabel('phase')
+ax[0,0].set_ylabel('slope-normal coordinate [m]')
+ax[1,0].set_ylabel('slope-normal coordinate [m]')
+ax[0,0].set_ylim((0,100))
+#%%
+plt.figure()
+plt.pcolor(a['ll'], time/86400, grf/a['f'])
+plt.colorbar()
