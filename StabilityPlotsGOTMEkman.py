@@ -12,6 +12,8 @@ import scipy.integrate as integrate
 import matplotlib.pyplot as plt
 from pylab import *
 
+nll = 32
+
 directoryname = "../GOTMEkman/"
 directory = os.fsencode(directoryname)
 plt.figure
@@ -21,6 +23,7 @@ grt = (np.zeros(np.array(os.listdir(directory)).shape))
 time = (np.zeros(np.array(os.listdir(directory)).shape))
 wave = (np.zeros(np.array(os.listdir(directory)).shape))
 trans = (np.zeros(np.array(os.listdir(directory)).shape))
+
 for file in sorted(os.listdir(directory)):
     filename = os.fsdecode(file)
     print(filename)
@@ -28,20 +31,22 @@ for file in sorted(os.listdir(directory)):
         a = np.load(directoryname+filename);
         trans[counter] = integrate.trapz(a['U'], a['z']) # Cross-slope tranpsort
 
-        plt.plot(a['ll']*np.sqrt(1e-5)*a['H']/a['f'], a['gr']/a['f'])
+            
+        
+        if a['gr'][0]/a['f']<0.05:
+            plt.plot(a['ll'], a['gr']/a['f'])
 
-        plt.xlabel('along-track wavenumber [m$^{-1}$]')
-        plt.ylabel('growth rate')
-        plt.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
-#        plt.ylim((0,0.2))
-        plt.tight_layout()        
-        
-        
-        thetas[counter] = str(np.real(np.tanh(a['tht'])*a['Bz'][-1]/(a['f']*a['Vz'][-1])))
-        grt[counter] = max(a['gr'])
-        time[counter] = a['time'].item(0)
-        ind = np.argsort(a['gr'])
-        wave[counter] = a['ll'][ind[-1]]
+            plt.xlabel('along-track wavenumber [m$^{-1}$]')
+            plt.ylabel('growth rate')
+            plt.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+#        plt.ylim((0,1))
+            plt.tight_layout()
+            
+            thetas[counter] = str(np.real(np.tanh(a['tht'])*a['Bz'][-1]/(a['f']*a['Vz'][-1])))
+            grt[counter] = max(a['gr'])
+            time[counter] = a['time'].item(0)
+            ind = np.argsort(a['gr'])
+            wave[counter] = a['ll'][ind[-1]]
         counter = counter + 1
         continue
     else:
@@ -50,7 +55,7 @@ idx = np.argsort(time)
 grt= grt[idx]
 time= time[idx]
 trans = trans[idx]
-dtransdt = np.gradient(trans, 24*3600)
+dtransdt = np.gradient(trans, 3600*12)
 ttheory = -trans/dtransdt
 #wave = wave[idx]**(-1)*a['N']*a['H']/a['f']
 #plt.legend(thetas)
@@ -64,6 +69,7 @@ ax[0].set_ylabel('$\omega$/f')
 #ax[0].set_ylim((-2,2))
 ax[0].grid()
 #    
+ax[1].plot(time*a['f']/(2*np.pi), trans)
 #ax[1].plot(time*a['f']/(2*np.pi), wave, marker="x", linestyle='None')
 #ax[1].set_ylim(0, 1e5)
 #ax[1].set_ylabel('$l/(f/NH)$')
@@ -99,6 +105,11 @@ ax[2].plot(a['B'], z)
 ax[2].set_xlabel('mean buoyancy [m/s$^2$]', va='baseline')
 ax[2].get_xaxis().set_label_coords(.5, -.12)
 
+#%%
+z = a['z']    
+
+plt.figure()
+plt.plot(a['b']*a['w'], z)
 #
 ## Make Energetics Plot
 #plt.figure(figsize=(4.8, 4.8))

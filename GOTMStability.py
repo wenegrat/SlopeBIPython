@@ -26,8 +26,8 @@ nc_fid = Dataset(pathtofile, 'r')  # Dataset is the class behavior to open the f
 bg = np.squeeze(nc_fid.variables['buoy'][:])
 ug = np.squeeze(nc_fid.variables['u'][:])
 vg = np.squeeze(nc_fid.variables['v'][:])
-kappag = np.squeeze(nc_fid.variables['nuh'][:])
-nug = np.squeeze(nc_fid.variables['num'][:])
+kappag = np.squeeze(nc_fid.variables['nuh'][:]) + 1e-5
+nug = np.squeeze(nc_fid.variables['num'][:]) + 1e-5
 nng = np.squeeze(nc_fid.variables['NN'][:])
 ntg, nzg = vg.shape
 zg = np.linspace(0.25, 147.75, 300)
@@ -37,10 +37,10 @@ ts = 3600
 f = 1e-4
 tht = 5e-3
 Nb = np.sqrt(1e-5)
-H = 300
+H = 150
 nz = 32#256
 
-ly_global = np.logspace(-4, -1, 32)
+ly_global = np.linspace(1e-4, 1e-2, 32)
 # Create bases and domain
 # Use COMM_SELF so keep calculations independent between processes
 z_basis = de.Chebyshev('z', nz, interval=(0,H))
@@ -60,7 +60,7 @@ Vz = domain.new_field(name='Vz')
 Bz = domain.new_field(name='Bz')
 B = domain.new_field(name='B')
 
-for i in range(0, ntg, 24):
+for i in range(0, ntg, 12):
     
     problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
             'bz'], eigenvalue='omg', tolerance = 1e-10)
@@ -120,7 +120,7 @@ for i in range(0, ntg, 24):
     solver = problem.build_solver()
     
     # Create function to compute max growth rate for given kx
-    def max_growth_rate(ly):
+    def sorted_eigen(ky, ly):
         logger.info('Computing max growth rate for ly = %f' %ly)
         # Change kx parameter
         problem.namespace['l'].value = ly
@@ -134,7 +134,18 @@ for i in range(0, ntg, 24):
         idx = np.argsort(omg.imag)
 #        print(str(idx[-1]))
         # Return largest imaginary part
-        return omg[idx[-1]].imag
+        return idx
+    
+    def max_growth_rate(l):
+
+        """Finds maximum growth rate for given wavenumbers k, l."""
+        k = 0
+        print(k, l)
+
+        # solve eigenvalue problem and sort
+        idx = sorted_eigen(k, l)
+
+        return solver.eigenvalues[idx[-1]].imag
     
     # Compute growth rate over local wavenumbers
     ly_local = ly_global[CW.rank::CW.size]
@@ -154,9 +165,29 @@ for i in range(0, ntg, 24):
     
     # Plot growth rates from root process
     if CW.rank == 0:
+        # get full eigenvectors and eigenvalues for l with largest growth
+        idx = sorted_eigen(0., ly_global[np.argmax(growth_global)])
+        solver.set_state(idx[-1])
+
+        # collect eigenvector
+        up = solver.state['u']
+        vp = solver.state['v']
+        wp = solver.state['w']
+        bp = solver.state['b']
+        
+        uzp = solver.state['uz']
+        vzp = solver.state['vz']
+        
+        # shear production
+        SP = -2*np.real(np.conj(wp['g'])*(up['g']*Uz['g']+vp['g']*Vz['g']))
+
+        # buoyancy production
+        BP = 2*np.real((up['g']*np.sin(tht)+wp['g']*np.cos(tht))*np.conj(bp['g']))
+        
+        DISS = -2*np.real(nu['g']*(uzp**2 + vzp**2))
         
         name = 'StabilityData_'+str(i) # Can vary this depending on parameter of interest
         np.savez(pathtosave+name, nz=nz, tht=tht, z=z, f=f, kap=kap['g'], nu=nu['g'], U=U['g'],
         V=V['g'], B=B['g'], Bz=Bz['g'], N = Nb, Vz=Vz['g'], H = H, ll=ly_global, time=i*ts,
-        gr=growth_global)
+        gr=growth_global, u=up['g'], v=vp['g'], w = wp['g'], b = bp['g'], SP = SP, BP=BP, DISS=DISS)
         
