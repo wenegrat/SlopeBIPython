@@ -103,6 +103,7 @@ for gamma in gammas:
         
         
     zind = np.floor( next((x[0] for x in enumerate(z) if x[1]>h)))
+    zind = int(zind)
     V['g'] = Vo
     Vz['g'][0:zind] = Vo/h
     V['g'][0:zind] = Vo*z[0:zind]/h
@@ -232,6 +233,6 @@ for gamma in gammas:
 #        plt.savefig('growth_rates_%.4f_%.1f.png' %(tht, nz))
         
         name = 'StabilityData_'+str(gamma) # Can vary this depending on parameter of interest
-        np.savez(directoryname+name + '.npz', nz=nz, tht=theta, gamma = gamma, z=z, f=f, kap=kap['g'], Pr=Pr, U=U['g'],
+        np.savez(directoryname+name + '.npz', nz=nz, tht=theta, gamma = gamma, z=z, f=f, 
         V=V['g'], B=B['g'], Bz=Bz['g'], Vz=Vz['g'], H = H, ll=ly_global,
         gr=growth_global)

@@ -14,12 +14,12 @@ import dedalus.public as de
 from mpi4py import MPI
 CW = MPI.COMM_WORLD
 import scipy.integrate as integrate
-
+from scipy.interpolate import interp1d
 import logging
 logger = logging.getLogger(__name__)
 
-pathtofile = '/home/jacob/GOTM/cases/slope/entrainment.nc'
-pathtosave = '/home/jacob/dedalus/GOTMEkman/'
+pathtofile = '/data/thomas/jacob13/STABILITY/GOTMOUT/entrainment_down.nc'
+pathtosave = '/data/thomas/jacob13/STABILITY/GOTMEkmanD/'
 
 nc_fid = Dataset(pathtofile, 'r')  # Dataset is the class behavior to open the file
 
@@ -37,10 +37,14 @@ ts = 3600
 f = 1e-4
 tht = 1e-2
 Nb = (3.5e-3)
-H = 300
-nz = 128
 
-ly_global = np.linspace(1e-4, 1e-2, 32)
+H = 150
+nz = 256
+
+
+
+ly_global = np.linspace(1e-4, 1e-2, 192)
+
 # Create bases and domain
 # Use COMM_SELF so keep calculations independent between processes
 z_basis = de.Chebyshev('z', nz, interval=(0,H))
@@ -60,17 +64,23 @@ Vz = domain.new_field(name='Vz')
 Bz = domain.new_field(name='Bz')
 B = domain.new_field(name='B')
 
-for i in range(0, ntg, 12):
+for i in range(0, ntg, 6):
     
     problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
             'bz'], eigenvalue='omg', tolerance = 1e-10)
     kap['g'] = np.interp(z,zg, kappag[i,1:])
     nu['g'] = np.interp(z, zg, nug[i,1:])
     U['g'] = np.interp(z,zg, ug[i,:])
+    box = np.ones(5)/5
+    kap['g'] = np.convolve(kap['g'], box, mode='same')
+    nu['g'] = np.convolve(nu['g'], box, mode='same')
+    U['g'] = np.convolve(U['g'], box, mode='same')
     Uz  = U.differentiate(z_basis)
     V['g'] = np.interp(z, zg, vg[i,:])
+    V['g'] = np.convolve(V['g'], box, mode='same')
     Vz = V.differentiate(z_basis)
     B['g'] = np.interp(z, zg, bg[i,:])
+    B['g'] = np.convolve(B['g'], box, mode='same')
     Bz = B.differentiate(z_basis)
     Bz['g'] = np.interp(z, zg[0:-10], nng[i,0:-10])
     
