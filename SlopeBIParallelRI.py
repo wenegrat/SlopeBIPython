@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 # Global parameters
-directoryname = "/data/thomas/jacob13/STABILITY/SlopeAngleRiVar/"
+directoryname = "/data/thomas/jacob13/STABILITY/SlopeAngleRiVar3/"
 
 # Physical parameters
 f = 1e-4
@@ -36,6 +36,9 @@ Bzmag = 2.5e-5 # N = 5e-3
 tht = 5e-3
 
 Shmag = Bzmag*tht/1e-4
+Shmag = Shmag/10
+Shmag = 0.1/H
+
 #Shmag = 1e-4
 #thtarr = np.linspace(-1.5, 1.5, 64)*Shmag*f/Bzmag
 
