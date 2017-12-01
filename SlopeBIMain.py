@@ -44,3 +44,4 @@ SlopeBIParallelEkman.py # Uses output of EkmanSolverForward to calculate and sav
 StabilityPlotsEkman.py # Loads the output of SlopeBIParallelEkman and makes some plots
 AllenBLStructure.py # Basic code to calculate BL flow and N2 structure based on Allen and Newberger 1998
 SlopeSIParallel.py # Calculates growth rates for symmetric mode varying theta (delta)
+TestDelta.py # show that normal isopycnals imply delta = alpha^2

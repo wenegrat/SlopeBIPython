@@ -48,6 +48,12 @@ BzmagBL = RiBL*Shmag**2
 
 l = ln*f/(H*np.sqrt(Bzmag))
 l = 0.0040392358531509045
+#l = 1e-6
+
+tht = delta/(Bzmag/(f*Shmag))
+tht = 5e-3
+
+
 # Grid Parameters
 nz = 128#256
 
@@ -89,8 +95,7 @@ B['g'] = Bt
 #    bz = 1/(2*Ri*np.sin(tht)**2)*(f**2*np.cos(tht)+np.sqrt(f**4*np.cos(tht)**2 + 4*Bzmag*f**2*Ri*np.sin(tht)**2))
 #    Shmag = -bz/(f*np.sin(tht))
 
-tht = delta/(Bzmag/(f*Shmag))
-tht = 5e-3
+
 
 #problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
 #        'bz'], eigenvalue='omg', tolerance = 1e-10)

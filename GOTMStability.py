@@ -37,8 +37,8 @@ ts = 3600
 f = 1e-4
 tht = 1e-2
 Nb = (3.5e-3)
-H = 150
-nz = 32#256
+H = 300
+nz = 128
 
 ly_global = np.linspace(1e-4, 1e-2, 32)
 # Create bases and domain

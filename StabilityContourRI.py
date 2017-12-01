@@ -11,9 +11,12 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from pylab import *
+from scipy import interpolate
+
+
 plt.rc('text', usetex=True)
 plt.rcParams.update({'font.size': 18})
-directoryname = "../SlopeAngleRiVar/"
+directoryname = "../SlopeAngleRiVar2/"
 directory = os.fsencode(directoryname)
 
 ntht = 256
@@ -63,7 +66,7 @@ grn[np.abs(grnd)>0.05] = np.nan
 #grn = it(list(np.ndindex(grn.shape))).reshape(grn.shape)
 
 array = np.ma.masked_invalid(grn)
-ll, tt = np.meshgrid(a['ll'], thetas)
+ll, tt = np.meshgrid(a['ll'], rivec)
 l1 = ll[~array.mask]
 t1 = tt[~array.mask]
 newg = array[~array.mask]
@@ -72,40 +75,45 @@ grn = interpolate.griddata((l1, t1), newg.ravel(), (ll, tt))
 #%%
 nc = 41
 maxc = 0.3
-fs =16
+fs =18
 
 grn = grn.astype(float)
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(8, 4))
 plt.grid(linestyle='--', alpha = 0.5)
 ax = plt.contourf(a['ll']/(a['f']/(a['Vz'][-1]*a['H'])), rivec, 
                grn,np.linspace(0, maxc, nc),vmin=-maxc, vmax=maxc, cmap='RdBu_r', labelsize=20)
 plt.xlim((0,3))
 cbar = plt.colorbar()
-cbar.set_ticks(np.linspace(0, 1, 11))
-cbar.set_label('$\hat{\omega}$', fontsize=18)
+cbar.set_ticks(np.linspace(0, maxc, 7))
+cbar.set_label('${\omega}/f$', fontsize=18)
 CS = plt.contour(a['ll']/(a['f']/(a['Vz'][-1]*a['H'])), rivec, grn, 
-            np.linspace(.1, 1, 19),colors='0.5' )
+            np.linspace(.05, maxc, 6),colors='0.5' )
 plt.tick_params(axis='both', which='major', labelsize=fs)
 plt.clabel(CS, inline=1, fontsize = 10, fmt='%1.2f')
-plt.xlabel('$\hat{l}$', fontsize= 20)
-plt.ylabel('$Ri$', fontsize=20)
+plt.xlabel('$l\'$', fontsize= 20)
+plt.ylabel('$\mathrm{Ri}$', fontsize=20)
+plt.xticks([0, 1, 2, 3])
+plt.tight_layout()
 
 print("Maximum Ri processed: "+str(np.max(rivec[rivec!=0])))
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/RiStability.eps', format='eps', dpi=1000)
 #
 #%%
-# Make plot comparing Ri=1 with Stone solution
-k = a['ll']/(a['f']/(a['V'][-1]))
-rind = 47
-Ri = rivec[rind]
-stgr = 1/(2*3**(1/2))*(k - 2/15*k**3*(Ri + 1))
-
-
-plt.figure()
-plt.plot(k, stgr)
-plt.plot(k, grn[rind,:])
-plt.ylim((0, .5))
-#plt.figure(figsize=(10, 6))
-#plt.plot(rivec, maxgr/a['f'])
+## Make plot comparing Ri=1 with Stone solution
+#k = a['ll']/(a['f']/(a['V'][-1]))
+##k = a['ll']*np.sqrt(a['Bz'][-1])*a['H']/a['f']
+#rind = 0
+#Ri = rivec[rind]
+#stgr = 1/(2*3**(1/2))*(k - 2/15*k**3*(Ri + 1))
+#
+#
+#plt.figure()
+#plt.plot(k, stgr)
+#plt.plot(k, grn[rind,:])
+#plt.plot(k, grtest/a['f'])
+#plt.ylim((0, .5))
+#plt.title(str(np.sqrt(a['Bz'][-1]*Ri)/a['f']*a['tht']))
+#plt.legend(['Stone', '$S_H = 6\\times 10^{-2}$', '$S_H = 6\\times 10^{-3}$'])
+##plt.figure(figsize=(10, 6))
+##plt.plot(rivec, maxgr/a['f'])
 #plt.ylim((-0.1, 0.1))
-

@@ -45,8 +45,8 @@ for file in os.listdir(directory):
 idx = np.argsort(thetas)
 thetas = thetas[idx]
 gr = gr[idx,:]
-grn =  (gr*np.sqrt(a['Bz'][-1])/(a['f']*a['Vz'][-1]))
-
+#grn =  (gr*np.sqrt(a['Bz'][-1])/(a['f']*a['Vz'][-1]))
+grn = gr/a['f']
 #grn[np.abs(grn)>0.4] = np.nan
 grnd = np.zeros(grn.shape)
 grnd[1:-1,:] = grn[1:-1,:]-grn[0:-2,:]
@@ -70,17 +70,18 @@ grn = interpolate.griddata((l1, t1), newg.ravel(), (ll, tt))
 #grn = (gr*a['Bz'][-1]*a['f']/((a['f']*a['Vz'][-1])**2)*np.sqrt(np.sqrt(0.2*a['Bz'][-1]/a['f'])))
 grn = grn.astype(float)
 
+#%%
 nc = 41
 maxc = 0.5
-fs =16
+fs =18
 
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(6, 4))
 plt.grid(linestyle='--', alpha = 0.5)
 plt.contourf(a['ll']*np.sqrt(a['Bz'][-1])*a['H']/a['f'], thetas*a['Bz'][-1]/(a['f']*a['Vz'][-1]), 
                grn, np.linspace(0, maxc, nc),vmin=-maxc, vmax=maxc, cmap='RdBu_r', labelsize=20)
 cbar = plt.colorbar()
 cbar.set_ticks(np.linspace(0, 1, 11))
-cbar.set_label('$\hat{\omega}$', fontsize=18)
+cbar.set_label('${\omega}/f$', fontsize=18)
 CS = plt.contour(a['ll']*np.sqrt(a['Bz'][-1])*a['H']/a['f'], thetas*a['Bz'][-1]/(a['f']*a['Vz'][-1]), grn, 
             np.linspace(.1, 1, 10),colors='0.5' )
 plt.tick_params(axis='both', which='major', labelsize=fs)
@@ -88,13 +89,16 @@ plt.clabel(CS, inline=1, fontsize = 10, fmt='%1.1f')
 #plt.contour(a['ll']*np.sqrt(a['Bz'][-1])*a['H']/a['f'], thetas*a['Bz'][-1]/(a['f']*a['Vz'][-1]), 
 #               grn,np.linspace(1e-2, .5, 10),vmin=-0.5, vmax=0.5)
 plt.xlim((0, 4))
-plt.xlabel('$\hat{l}$', fontsize= 20)
+plt.xlabel('$\mathrm{Ri}^{1/2}l\'$', fontsize= 20)
 plt.ylabel('$\delta$', fontsize=20)
+plt.yticks([-2, -1, 0, 1, 2])
+plt.xticks([0, 1, 2, 3, 4])
 
-
-
+plt.tight_layout()
 
 print("Maximum \delta processed: "+str(np.max(thetas[thetas!=0])*a['Bz'][-1]/(a['f']*a['Vz'][-1])))
+
+#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/StabilityRi1.eps', format='eps', dpi=1000)
 
 #%% Make Smoothed Plot
 #plt.figure()
@@ -105,4 +109,20 @@ print("Maximum \delta processed: "+str(np.max(thetas[thetas!=0])*a['Bz'][-1]/(a[
 #plt.contour(data, 
 #            np.linspace(.1, 1, 10),colors='0.5' )
 #plt.ylim((-0.1, 0.1))
-#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/StabilityRi1.eps', format='eps', dpi=1000)
+
+#191 is theta index for delta =1
+#plt.figure()
+#plt.plot(a['ll'], grn[191,:])
+#deltas = thetas*a['Bz'][-1]/(a['f']*a['Vz'][-1])
+#
+#plt.figure()
+#k = np.linspace(0, 3, 100)
+##ln = a['ll']*np.sqrt(a['Bz'][-1])*a['H']/a['f']
+#rind = 127
+##Ri = shvec[rind]
+#plt.plot(a['ll']/(a['f']/(a['Vz'][-1]*a['H'])), grn[rind, :])
+#Ri = 1
+#stgr = 1/(2*3**(1/2))*(k - 2/15*k**3*(Ri + 1)) 
+#plt.plot(k, stgr, linestyle='dashed')
+#title(str(deltas[rind]))
+#plt.ylim((0, 0.4))

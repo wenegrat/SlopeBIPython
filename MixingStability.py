@@ -20,7 +20,7 @@ H = 2500. # domain height
 ll = np.logspace(-5, -2, 64)
 
 # number of grid points
-nz = 128
+nz = 48#256
 
 # file name that results are saved in
 name = 'test'
@@ -164,6 +164,8 @@ u = solver.state['u']
 v = solver.state['v']
 w = solver.state['w']
 b = solver.state['b']
+uz = solver.state['uz']
+vz = solver.state['vz']
 
 # shear production
 SP = -2*np.real(np.conj(w['g'])*(u['g']*Uz['g']+v['g']*Vz['g']))
@@ -171,11 +173,12 @@ SP = -2*np.real(np.conj(w['g'])*(u['g']*Uz['g']+v['g']*Vz['g']))
 # buoyancy production
 BP = 2*np.real((u['g']*np.sin(tht)+w['g']*np.cos(tht))*np.conj(b['g']))
 
+DISS = -kap['g']*(np.abs(uz['g'])**2 + np.abs(vz['g'])**2)
 # SAVE TO FILE
-
-np.savez(name + '.npz', nz=nz, N=N, tht=tht, z=z, kap=kap['g'], Pr=Pr, U=U['g'],
-        V=V['g'], B=B['g'], u=u['g'], v=v['g'], w=w['g'], b=b['g'], ll=ll,
-        gr=gr, SP=SP, BP=BP)
+#
+#np.savez(name + '.npz', nz=nz, N=N, tht=tht, z=z, kap=kap['g'], Pr=Pr, U=U['g'],
+#        V=V['g'], B=B['g'], u=u['g'], v=v['g'], w=w['g'], b=b['g'], ll=ll,
+#        gr=gr, SP=SP, BP=BP, DISS=DISS)
 
 # PLOTTING
 
@@ -229,14 +232,15 @@ plt.tight_layout()
 plt.figure(figsize=(5, 6))
 plt.plot(BP/np.max(BP), z)
 plt.plot(SP/np.max(BP), z)
-
+plt.plot(DISS/np.max(BP), z)
 plt.xlabel('Kinetic energy tendency ')
 plt.ylabel('Slope-normal coordinate [m]')
 plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-plt.legend([ 'Buoyancy production', 'Shear production'], frameon=False)
+plt.legend([ 'Buoyancy production', 'Shear production', 'Dissipation'], frameon=False, loc=2)
 plt.tight_layout()
 plt.grid(linestyle='--', alpha = 0.5)
 plt.ylim((0, 2500))
+plt.xlim((-2.5, 1))
 #plt.savefig('fig/energetics.pdf')
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingEnergetics.pdf')
 #%%
@@ -327,21 +331,35 @@ labels = ['0', '$\pi$', '$2\pi$']
 ax[1,1].set_xticklabels(labels)  
 #plt.savefig('fig/modes.pdf', dpi=300)
 plt.tight_layout()
-plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingPerturbations.pdf', format='pdf')
+#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingPerturbations.pdf', format='pdf')
 
 plt.show()
 #%% ADDING MY OWN CHECK OF RI
-N2hat = Bz['g'] + N**2*cos(tht)
-M2hat = N**2*sin(tht)
-N2 = N2hat*cos(tht) + M2hat*sin(tht)
-M2 = M2hat*cos(tht) - N2hat*sin(tht)
-N2 = N**2 + Bz['g']*cos(tht)
-M2 = -Bz['g']*sin(tht)
-Ri = N2*f**2/M2**2
+N2hat = Bz['g'] + N**2*np.cos(tht)
+M2hat = N**2*np.sin(tht)
+#N2 = N2hat*np.cos(tht) + M2hat*np.sin(tht)
+#M2 = M2hat*np.cos(tht) - N2hat*np.sin(tht)
+N2 = N**2 + Bz['g']*np.cos(tht)
+M2 = -Bz['g']*np.sin(tht)
+
+Ri = N2*f**2/(M2**2)
 dt = np.sqrt(2*kap_1/f)
+S = N2/(f**2)* np.tan(tht)**2
+delt = np.sqrt(S*Ri)
+delt = N2hat/M2hat*np.tan(tht)
+thtiso = np.arctan(M2/N2)
+#thtiso = np.arctan(M2hat/N2hat)
+
+iso = np.zeros((M2.shape[0], 2))
+iso[:,0] = M2
+iso[:,1] = N2
+sl = np.zeros((M2.shape[0], 2))
+sl[:,0] = 1
+sl[:,1] = np.tan(tht)
 
 plt.figure()
-plt.plot(Ri, z)
-plt.axhline(y=dt, color='r', linestyle='-')
-plt.ylim((0, 500))
-plt.xlim((0, 50))
+#plt.plot(-N**2/Bz['g'] - 1, z)
+plt.plot(N2, z)
+#plt.axhline(y=dt, color='r', linestyle='-')
+plt.ylim((0, 2000))
+#plt.xlim((0, 2))
