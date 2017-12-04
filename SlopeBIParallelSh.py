@@ -74,28 +74,34 @@ Bz = domain.new_field(name='Bz')
 Bz['g'] = np.array(Bzmag*np.ones([nz]))
 #Bt[1:nz] = integrate.cumtrapz(Bz['g'], z)
 #B['g'] = Bt
-df = 1
+df = 0.01
+rf = 1
+sf = (df/np.sqrt(rf))**2
 # 2D Boussinesq hydrodynamics, with no-slip boundary conditions
 # Use substitutions for x and t derivatives
 for Sh in Shv:
-    #delta = S^1/2* Ri^1/2
-    # Sh = S^(1/2)/
-#    Ri = Sh
-#    tht = 0
-    Shmag = Sh*f/tht #Sh for Ri=1 is S^1/2
-#    Shmag = 0.001
-#    Shmag = np.sqrt(Bzmag/Ri)
-    V['g'] = Shmag*(z)/np.cos(tht)
-    Vz['g'] = Shmag*(z-z+1) 
     
-    ly_global = np.linspace(1e-4, 3,128)*f/(Shmag*H)
+    tht = Sh
+    Bzmag = sf*f**2/(tht**2)
+    Shmag = np.sqrt(Bzmag/Ri)
+    #delta = S^1/2* Ri^1/2
+#    # Sh = S^(1/2)/
+##    Ri = Sh
+##    tht = 0
+#    Shmag = Sh*f/tht #Sh for Ri=1 is S^1/2
+##    Shmag = 0.001
+##    Shmag = np.sqrt(Bzmag/Ri)
+#    V['g'] = Shmag*(z)/np.cos(tht)
+#    Vz['g'] = Shmag*(z-z+1) 
+    
+    ly_global = np.linspace(1e-4, 4,128)*f/(Shmag*H)
 
 #    Shmag = np.sqrt(Bzmag/Ri)
 #    V['g'] = Shmag*(z)
 #    Vz['g'] = Shmag*(z-z+1) #Note this assumes no horizotal variation (ie. won't work for the non-uniform case)
 #    Bzmag = Ri*Shmag**2 
-    Bzmag = df*Shmag*f/tht
-    
+#    Bzmag = df*Shmag*f/tht
+#    
     Ri = Bzmag/(Shmag**2)
 #    Ri = df/Sh
     Bz['g'] = np.array(Bzmag*np.ones([nz]))

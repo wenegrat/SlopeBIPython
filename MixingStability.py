@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 # parameters
 N = 1e-3 # buoyancy frequency
-f = 2.5e-5 # Coriolis parameter
+f = -2.5e-5 # Coriolis parameter
 tht = 2e-3 # slope angle
 kap_0 = 1e-5 # background diffusivity
 kap_1 = 1e-3 # bottom enhancement of diffusivity
@@ -17,10 +17,10 @@ Pr = 1 # Prandtl number
 H = 2500. # domain height
 
 # along-slope wavenumbers
-ll = np.logspace(-5, -2, 64)
+ll = np.logspace(-5, -2, 128)
 
 # number of grid points
-nz = 48#256
+nz = 256
 
 # file name that results are saved in
 name = 'test'
@@ -176,37 +176,40 @@ BP = 2*np.real((u['g']*np.sin(tht)+w['g']*np.cos(tht))*np.conj(b['g']))
 DISS = -kap['g']*(np.abs(uz['g'])**2 + np.abs(vz['g'])**2)
 # SAVE TO FILE
 #
-#np.savez(name + '.npz', nz=nz, N=N, tht=tht, z=z, kap=kap['g'], Pr=Pr, U=U['g'],
-#        V=V['g'], B=B['g'], u=u['g'], v=v['g'], w=w['g'], b=b['g'], ll=ll,
-#        gr=gr, SP=SP, BP=BP, DISS=DISS)
+np.savez(name + '.npz', nz=nz, N=N, tht=tht, z=z, kap=kap['g'], Pr=Pr, U=U['g'],
+        V=V['g'], B=B['g'], u=u['g'], v=v['g'], w=w['g'], b=b['g'], ll=ll,
+        gr=gr, SP=SP, BP=BP, DISS=DISS)
 
 # PLOTTING
 
 # mean state
 #%%
+plt.rcParams['text.usetex'] = True
+plt.rcParams.update({'font.size': fs})
+fs = 18
 fig, ax = plt.subplots(1, 3, sharey=True,figsize=(9, 5))
 
-ax[0].semilogx(kap['g'], z)
+ax[0].semilogx(kap['g'], z, linewidth=2)
 ax[0].set_xticks([1e-5, 1e-4, 1e-3])
-ax[0].set_xlabel('mixing coefficient [m$^2$/s]')
-ax[0].set_ylabel('slope-normal coordinate [m]')
+ax[0].set_xlabel('Mixing coefficient [m$^2$/s]', fontsize=fs)
+ax[0].set_ylabel('Slope-normal coordinate [m]', fontsize=fs)
 ax[0].grid(linestyle='--', alpha = 0.5)
 ax[0].set_ylim((0, 2500))
 
 #ax[0].get_xaxis().set_label_coords(.5, -.12)
 
-ax[1].plot(U['g'].real, z)
-ax[1].plot(V['g'].real, z)
+ax[1].plot(U['g'].real, z, linewidth=2)
+ax[1].plot(V['g'].real, z, linewidth=2)
 #ax[1].set_xlim((0, 0.1))
-ax[1].set_xticks([0, 0.05, 0.1])
-ax[1].set_xlim((-.005, 0.1))
+ax[1].set_xticks([-0.1, -0.05, 0])
+ax[1].set_xlim((-0.1, .005))
 ax[1].set_ylim((0, 2500))
-ax[1].set_xlabel('mean flow [m/s]')
+ax[1].set_xlabel('Mean flow [m/s]', fontsize=fs)
 #ax[1].get_xaxis().set_label_coords(.5, -.12)
 ax[1].grid(linestyle='--', alpha = 0.5)
 
-ax[2].plot(N**2*np.cos(tht)*z + B['g'].real, z)
-ax[2].set_xlabel('mean buoyancy [m/s$^2$]')
+ax[2].plot(N**2*np.cos(tht)*z + B['g'].real, z, linewidth=2)
+ax[2].set_xlabel('Mean buoyancy [m/s$^2$]', fontsize=fs)
 #ax[2].get_xaxis().set_label_coords(.5, -.12)
 ax[2].set_xlim((0, 0.002))
 ax[2].set_ylim((0, 2500))
@@ -216,12 +219,30 @@ ax[2].grid(linestyle='--', alpha = 0.5)
 
 # energetics
 #%%
-plt.figure(figsize=(6, 4))
-plt.semilogx(ll, gr)
-plt.xlabel('along-track wavenumber [m$^{-1}$]')
-plt.ylabel('growth rate [$s^{-1}$]')
-plt.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
-plt.grid(linestyle='--', alpha = 0.5, which='Both')
+
+def tickfun(X):
+    Y = 2*np.pi/X/1000
+    return ['%.1f' % z for z in Y]
+
+fig = plt.figure(figsize=(6, 4))
+ax1 = fig.add_subplot(111)
+#ax2 = ax1.twiny()
+
+ax1.semilogx(ll/(2*np.pi), gr, linewidth=2)
+ax1.set_xlabel('Along-slope wavenumber [m$^{-1}$]', fontsize=fs)
+ax1.set_ylabel('Growth rate [$s^{-1}$]', fontsize=fs)
+ax1.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+ax1.grid(linestyle='--', alpha = 0.5, which='Both')
+ax1.set_xlim((2e-6, 1e-3))
+#newticks = np.array([2*np.pi/100e3, 2*np.pi/10e3, 2*np.pi/1e3])
+#ax2.set_xscale('log')
+#
+#ax2.set_xticks(newticks)
+#ax2.set_xlim(ax1.get_xlim())
+#
+#ax2.set_xticklabels(tickfun(newticks))
+#ax2.set_xlabel('Wavelength [km]', labelpad=10)
+#ax2.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
 
 plt.tight_layout()
 
@@ -230,17 +251,18 @@ plt.tight_layout()
 
 #%%
 plt.figure(figsize=(5, 6))
-plt.plot(BP/np.max(BP), z)
-plt.plot(SP/np.max(BP), z)
-plt.plot(DISS/np.max(BP), z)
+plt.plot(BP/np.max(BP), z, linewidth=2)
+plt.plot(SP/np.max(BP), z, linewidth=2)
+plt.plot(DISS/np.max(BP), z, linewidth=2)
 plt.xlabel('Kinetic energy tendency ')
 plt.ylabel('Slope-normal coordinate [m]')
 plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-plt.legend([ 'Buoyancy production', 'Shear production', 'Dissipation'], frameon=False, loc=2)
+leg = plt.legend([ 'Buoyancy production', 'Shear production', 'Dissipation'], frameon=True, loc=9)
+leg.get_frame().set_alpha(.9)
 plt.tight_layout()
 plt.grid(linestyle='--', alpha = 0.5)
 plt.ylim((0, 2500))
-plt.xlim((-2.5, 1))
+plt.xlim((-1.1, 1.1))
 #plt.savefig('fig/energetics.pdf')
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingEnergetics.pdf')
 #%%
@@ -277,6 +299,9 @@ plt.show()
 #%%
 #%%
 # most unstable mode
+fs =20
+plt.rcParams.update({'font.size': fs})
+
 nc  = 40
 ly = np.linspace(0, 2*np.pi, nz)
 uvel = np.real(u['g'].reshape(nz, 1)* np.exp(1j*ly.reshape(1,nz)))

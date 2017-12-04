@@ -46,7 +46,8 @@ for file in os.listdir(directory):
         ln[counter, :] = a['ll']*np.sqrt(a['Bz'][-1])*a['H']/a['f']
         ln[counter, :] = a['ll']*(a['Vz'][-1])*a['H']/a['f']
         maxgr[counter] = np.max(gr[counter,:])
-        delta[counter] = a['Bz'][-1]/(a['f']*a['Vz'][-1]*np.cos(a['tht']))*a['tht']
+        delta[counter] = a['Bz'][-1]/(a['f']*a['Vz'][-1])*a['tht']
+        delta[counter] = np.sqrt(a['Bz'][-1])/a['f']*a['tht']
 #        grn[counter,:] = (gr[counter,:]/a['f'])*(rivec[counter]**(1/2))
         counter = counter + 1
 #        plt.plot(a['ll'], gr[counter-1,:]*np.sqrt(a['Bz'][-1])/(a['f']*a['Vz'][-1]))
@@ -67,8 +68,8 @@ grnd = np.zeros(grn.shape)
 #grnd[1:-1,:] = grn[1:-1,:]-grn[0:-2,:]
 #grn[grnd>0.2] = np.nan
 
-grnd[:, 1:-1] = grn[:, 1:-1]-grn[:,0:-2]
-grn[np.abs(grnd)>0.05] = np.nan
+#grnd[:, 1:-1] = grn[:, 1:-1]-grn[:,0:-2]
+#grn[np.abs(grnd)>0.05] = np.nan
 #grn[grn==0] = np.nan
 ##valid_mask = ~np.isnan(grn)
 ##coords = np.array(np.nonzero(valid_mask)).T
@@ -76,12 +77,12 @@ grn[np.abs(grnd)>0.05] = np.nan
 ##it = interpolate.LinearNDInterpolator(coords, values)
 ##grn = it(list(np.ndindex(grn.shape))).reshape(grn.shape)
 #
-array = np.ma.masked_invalid(grn)
-ll, tt = np.meshgrid(a['ll'], rivec)
-l1 = ll[~array.mask]
-t1 = tt[~array.mask]
-newg = array[~array.mask]
-grn = interpolate.griddata((l1, t1), newg.ravel(), (ll, tt))
+#array = np.ma.masked_invalid(grn)
+#ll, tt = np.meshgrid(a['ll'], rivec)
+#l1 = ll[~array.mask]
+#t1 = tt[~array.mask]
+#newg = array[~array.mask]
+#grn = interpolate.griddata((l1, t1), newg.ravel(), (ll, tt))
 
 
 #
@@ -122,7 +123,7 @@ plt.plot(k, stgr1, linestyle='dashed')
 
 plt.plot(k, stgr2, linestyle='dashed')
 
-plt.plot(k, mechoso)
+#plt.plot(k, mechoso)
 #plt.plot(k, grtest/a['f'])
 plt.ylim((0, .35))
 plt.grid(linestyle='--', alpha = 0.5)
@@ -141,7 +142,7 @@ plt.legend(['$\delta/Ri = '+str(shvec[0])+'$',
 #plt.figure(figsize=(10, 6))
 #plt.plot(rivec, maxgr/a['f'])
 #plt.ylim((-0.1, 0.1))
-plt.xlim((0, 3))
+plt.xlim((0, 4))
 plt.xlabel('$l\'$', fontsize=20)
 #plt.ylabel('$\\omega Ri^{1/2} f^{-1}$', fontsize=20)
 plt.ylabel('$\\omega/f$', fontsize=20)

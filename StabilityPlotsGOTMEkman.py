@@ -22,7 +22,7 @@ nll = 192
 nz = 256
 #nz = 128
 directoryname = "../GOTMEkmanCluster/"
-directoryname = "../GOTMEkmanD/"
+directoryname = "../GOTMEkmanU/"
 directory = os.fsencode(directoryname)
 plt.figure
 counter = 0
@@ -331,18 +331,20 @@ cm = 0.25
 cl = np.linspace(.0, cm, 21)
 #grf[np.logical_not(np.isfinite(grf))] = 0
 plt.figure(figsize=(10, 8))
-plt.contourf(a['ll'], time*a['f']/(2*np.pi), grfi/a['f'], cl, vmin=-cm, vmax=cm, cmap='RdGy_r')
+plt.contourf(a['ll']/(2*np.pi), time*a['f']/(2*np.pi), grfi/a['f'], cl, vmin=-cm, vmax=cm, cmap='RdGy_r')
 cb = plt.colorbar()
 cb.set_ticks(np.linspace(cl[0], cl[-1], 6))
 cb.set_label('$\\omega/f$', fontsize = 26)
 plt.ylim((0, 30))
-CS = plt.contour(a['ll'], time*a['f']/(2*np.pi), grfi/a['f'],
+CS = plt.contour(a['ll']/(2*np.pi), time*a['f']/(2*np.pi), grfi/a['f'],
             np.linspace(.025, cm, 4),colors='0.5')
+plt.xlim((0, 0.00150))
 #plt.tick_params(axis='both', which='major', labelsize=fs)
-mlocs = [(.003, 8), (.005, 10), (.003, 22),(0.007, 6)]
-#mlocs = [(0.001, 10)]
+#mlocs = [(.003, 8), (.005, 10), (.003, 22),(0.007, 6)]
+mlocs = np.array([(.003/(2*np.pi), 8), (.005/(2*np.pi), 10), (.003/(2*np.pi), 22),(0.007/(2*np.pi), 6)])
+mlocs = [(0.001/(2*np.pi), 10)] # For Upwelling case
 plt.clabel(CS, inline=1, fontsize = 10, fmt='%1.3f', manual = mlocs)
-plt.xlabel('$l$ $(m^{-1})$', fontsize = 24)
+plt.xlabel('$l$ $[m^{-1}]$', fontsize = 24)
 plt.ylabel('$\\frac{tf}{2\\pi}$', fontsize = 26)
 plt.grid(linestyle='--', alpha = 0.5)
 

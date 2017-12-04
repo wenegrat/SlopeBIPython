@@ -47,19 +47,30 @@ thetas = thetas[idx]
 gr = gr[idx,:]
 grn = gr/a['f']
 #%%
+plt.rcParams['text.usetex'] = True
+
+def tickfun(X):
+    Y = 1/X/1000
+    return ['%i' % z for z in Y]
+
+
+
 #fig, ax = plt.subplots(1, 2, sharey=False, figsize=(12, 5))
-fs = 16
+fs = 20
 plt.rc('xtick', labelsize=fs)
 plt.rc('ytick', labelsize=fs)
 
-plt.figure(figsize=(12,5))
+fig = plt.figure(figsize=(12,5))
+ax1 = fig.add_subplot(111)
+#ax2 = ax1.twiny()
 for i in range(0, thetas.shape[0]):
     
-    plt.semilogx(a['ll'], grn[i,:], label='$\\alpha = $ ' + str(thetas[i]))
-    plt.xlabel('along-track wavenumber [m$^{-1}$]', fontsize = fs)
-    plt.ylabel('growth rate', fontsize=fs)
-    plt.ylim((0, .25))
-    plt.xlim((1e-4, 1e-2))
+    ax1.semilogx(a['ll']/(2*np.pi), grn[i,:], label='$\\alpha = $ ' + str(thetas[i]), linewidth=2)
+    ax1.set_xlabel('Along-slope wavenumber [m$^{-1}$]', fontsize = fs)
+    ax1.set_ylabel('Growth rate', fontsize=fs)
+    ax1.set_ylim((0, .25))
+    ax1.set_xlim((1e-4, 1e-2))
+    ax1.set_xlim((2e-5, 1.5e-3))
     plt.grid(linestyle='--', alpha = 0.5)
 
 #    ax[0].semilogx(a['ll'], grn[i,:])
@@ -74,7 +85,19 @@ for i in range(0, thetas.shape[0]):
 #    ax[1].set_ylim((0, .04))
 #    ax[1].set_xlim((0, 0.0003))
 #    ax[1].ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
-plt.legend(fontsize=fs)
+ax1.legend(fontsize=fs)
+ax1.grid(linestyle='--', alpha = 0.5, which='Both')
+
+newticks = np.array([2*np.pi/50e3, 2*np.pi/10e3, 2*np.pi/1e3])
+newticks = np.array([1/50e3, 1/10e3, 1e-3])
+#ax2.set_xscale('log')
+#
+#ax2.set_xticks(newticks)
+#ax2.set_xlim(ax1.get_xlim())
+#
+#ax2.set_xticklabels(tickfun(newticks))
+#ax2.set_xlabel('Wavelength [km]', labelpad=10, fontsize=fs)
+#ax2.grid(False)
 z = a['z']    
 
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/IdealizedGrowthRates.eps', format='eps', dpi=1000, bbox_inches='tight')
