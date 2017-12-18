@@ -8,22 +8,34 @@ Main Script Compiled to Keep Track of Different Functions
 """
 
 # PARAMETER SPACE EXPLORATION
+
+# FIGURE 2, 3
+DeepShallowCalc.py# Calculate growth rate for deep and shallow modes as a function of slope angle.
+Stabilityplots.py # Plot the growth rates and Ri structure for the above.
+# FIGURE 4
+SpecificWavenumberDelta.py # Plot Energetics and Perturbation structure at given wavenumber/delta
+
+
+# FIGURE 5
 QGPlots.py # Makes the Mechoso 1980 plots of growth rate vs. delta for the QG limit.
+
+# FIGURE 6, 7
+SlopeBIParallelStone.py # Calculates growth rates varying theta (delta) for fixed N2, Uz
+StabilityContour.py # Plots for the above stability calculations.
+
+
 
 SIRegimeScan.py # Scan SI/CI parameter space for energetics.
 SIRegimeScanPlot.py # Load output of above, make some plots (not used)
 RegimeDiagram.py # Make the regime diagram
 
-SlopeBIParallelStone.py # Calculates growth rates varying theta (delta) for fixed N2, Uz
-StabilityContour.py # Plots for the above stability calculations.
+
 
 SlopeBIParallelRi.py # Calculates growth rate at fixed theta, N2 and varying Ri
 StabilityContourRI.py # Plots for above
 
-DeepShallowCalc.py# Calculate growth rate for deep and shallow modes as a function of slope angle.
-Stabilityplots.py # Plot the growth rates and Ri structure for the above.
 
-SpecificWavenumberDelta.py # Plot Energetics and Perturbation structure at given wavenumber/delta
+
 
 # EKMAN PROBLEM
 EkmanGammaCalcBI.py # Varies gamma and calculates BI growth rates

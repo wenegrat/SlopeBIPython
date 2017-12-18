@@ -34,7 +34,6 @@ for file in os.listdir(directory):
         plt.ylim((0, .5))
         plt.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
         plt.tight_layout()        
-#        plt.axvline(x=0.009)
         thetas[counter] = (a['tht'])
         gr[counter,:] = a['gr']
         counter = counter + 1
@@ -47,7 +46,7 @@ idx = np.argsort(thetas)
 thetas = thetas[idx]
 gr = gr[idx,:]
 grn = gr/a['f']
-#%%
+#%% MAKE IDEALIZED GROWTH RATE PLOT (FIG 3)
 plt.rcParams['text.usetex'] = True
 
 def tickfun(X):
@@ -55,8 +54,6 @@ def tickfun(X):
     return ['%i' % ceil(z) for z in Y]
 
 
-
-#fig, ax = plt.subplots(1, 2, sharey=False, figsize=(12, 5))
 fs = 20
 plt.rc('xtick', labelsize=fs)
 plt.rc('ytick', labelsize=fs)
@@ -65,7 +62,6 @@ fig = plt.figure(figsize=(12,5))
 ax1 = fig.add_subplot(111)
 ax2 = ax1.twiny()
 for i in range(0, thetas.shape[0]):
-    
     ax1.semilogx(a['ll']/(2*np.pi), grn[i,:], label='$\\theta = $ ' + str(thetas[i]), linewidth=2)
     ax1.set_xlabel('Along-slope wavenumber [m$^{-1}$]', fontsize = fs)
     ax1.set_ylabel('Growth rate', fontsize=fs)
@@ -74,18 +70,7 @@ for i in range(0, thetas.shape[0]):
     ax1.set_xlim((2e-5, 1.5e-3))
     plt.grid(linestyle='--', alpha = 0.5)
 
-#    ax[0].semilogx(a['ll'], grn[i,:])
-#    ax[0].set_xlabel('along-track wavenumber [m$^{-1}$]')
-#    ax[0].set_ylabel('growth rate')
-#    ax[0].set_ylim((0, .23))
-#    ax[0].ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
-#    
-#    ax[1].plot(a['ll'], grn[i,:])
-#    ax[1].set_xlabel('along-track wavenumber [m$^{-1}$]')
-#    ax[1].set_ylabel('growth rate')
-#    ax[1].set_ylim((0, .04))
-#    ax[1].set_xlim((0, 0.0003))
-#    ax[1].ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+
 ax1.legend(fontsize=fs)
 ax1.grid(linestyle='--', alpha = 0.5, which='Both')
 
@@ -104,7 +89,7 @@ z = a['z']
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/IdealizedGrowthRates.eps', format='eps', dpi=1000, bbox_inches='tight')
 
 #%%
-# Make Background State Plot
+# Make Background State Plot (FIG 2)
 
 V = np.array([a['V']])
 B = np.array([a['B']])
@@ -121,8 +106,8 @@ plt.ylim((0, 1000))
 
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/RiStructure.eps', format='eps', dpi=1000, bbox_inches='tight')
 
-#%%
-# Make Background State Plot
+#%% 
+# Make Background State Plot (FIG 2)
 
 V = np.array([a['V']])
 B = np.array([a['B']])

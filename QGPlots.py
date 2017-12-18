@@ -77,7 +77,7 @@ plt.tight_layout()
 cbar = fig.colorbar(IM,  ax=ax.ravel().tolist(), orientation='horizontal', shrink = 0.5)
 cbar.set_label('Growth rate, ${\omega}_i$', fontsize=20)
 cbar.set_ticks(np.linspace(0, maxc, 6))
-plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/QGPlot.eps', format='eps', dpi=1000)
+#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/QGPlot.eps', format='eps', dpi=1000)
 #%%
 #plt.figure()
 #plt.plot(ll, om[250,:])

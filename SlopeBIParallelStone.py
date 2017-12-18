@@ -1,12 +1,5 @@
 """
-Dedalus script for calculating the maximum growth rates in no-slip
-Rayleigh Benard convection over a range of horizontal wavenumbers.
-
-This script can be ran serially or in parallel, and produces a plot of the
-highest growth rate found for each horizontal wavenumber.
-
-To run using 4 processes, for instance, you could use:
-    $ mpiexec -n 4 python3 rayleigh_benard.py
+Stone-on-a-slope
 
 """
 
@@ -24,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 # Global parameters
-directoryname = "/home/jacob/dedalus/TestMixingLinear"
+directoryname = "/home/jacob/dedalus/TestMixingLinear" # Where to save the output
 
 # Physical parameters
 f = 1e-4
