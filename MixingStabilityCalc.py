@@ -115,7 +115,8 @@ problem.add_bc('left(w) = 0')
 problem.add_bc('left(bz) = 0')
 problem.add_bc('right(uz) = 0')
 problem.add_bc('right(vz) = 0')
-problem.add_bc('right(w) = 0')
+#problem.add_bc('right(w) = 0')
+problem.add_bc('right(w) = -right(u)*tan(tht)')
 problem.add_bc('right(bz) = 0')
 
 # set up solver

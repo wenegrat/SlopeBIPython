@@ -32,8 +32,6 @@ v = a['v']
 w = a['w']
 b = a['b']
 
-#Vz = np.diff(V)/np.diff(z)
-#Uz = np.diff(U)/np.diff(z)
 Vz = a['Vz']
 Uz = a['Uz']
 
@@ -41,7 +39,7 @@ MagSh = np.sqrt((Vz*np.cos(tht))**2 + (Uz*np.cos(tht))**2)
 Ri = (Bz*np.cos(tht)+N**2)/MagSh**2
 # mean state
 
-#%%
+#%% 4 Panel Basic State
 fs = 18
 
 plt.rcParams['text.usetex'] = True
@@ -51,9 +49,6 @@ plt.rcParams['font.family'] = 'STIXGeneral'
 
 fig, ax = plt.subplots(2, 2, sharey=True,sharex=False,figsize=(6, 8))
 
-
-
-#ax[0].get_xaxis().set_label_coords(.5, -.12)
 
 ax[0, 0].plot(U.real, z, linewidth=2)
 ax[0, 0].plot(V.real, z, linewidth=2)
@@ -92,7 +87,7 @@ plt.tight_layout()
 
 
 
-#%%
+#%% Old 3 panel basic state
 fs = 18
 
 plt.rcParams['text.usetex'] = True
@@ -131,7 +126,7 @@ plt.tight_layout()
 #fig.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingBasicState.pdf')
 
 # energetics
-#%%
+#%% Growth Rates
 fs = 20
 plt.rcParams.update({'font.size': fs})
 def tickfun(X):
@@ -163,118 +158,117 @@ plt.tight_layout()
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingStability.pdf')
 
 
-#%%
-plt.figure(figsize=(5, 6))
-plt.plot(BP/np.max(BP), z, linewidth=2)
-plt.plot(SP/np.max(BP), z, linewidth=2)
-plt.plot(DISS/np.max(BP), z, linewidth=2)
-plt.xlabel('Kinetic energy tendency ')
-plt.ylabel('Slope-normal coordinate [m]')
-plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-leg = plt.legend([ 'Buoyancy production', 'Shear production', 'Dissipation'], frameon=True, loc=9)
-leg.get_frame().set_alpha(.9)
-plt.tight_layout()
-plt.grid(linestyle='--', alpha = 0.5)
-plt.ylim((0, 2500))
-plt.xlim((-1.1, 1.1))
-#plt.savefig('fig/energetics.pdf')
-#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingEnergetics.pdf')
-#%%
-# most unstable mode
-
-ly = np.linspace(0, 2*np.pi, nz)
-
-fig, ax = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(6.4, 6.4))
-im = ax[0,0].pcolormesh(ly, z, np.real(u.reshape(nz, 1)
-        * np.exp(1j*ly.reshape(1,nz))), rasterized=True, cmap='RdBu_r')
-plt.colorbar(im, ax=ax[0,0])
-ax[0,0].set_title('across-slope velocity')
-im = ax[0,1].pcolormesh(ly, z, np.real(v.reshape(nz, 1)
-        * np.exp(1j*ly.reshape(1,nz))), rasterized=True, cmap='RdBu_r')
-plt.colorbar(im, ax=ax[0,1])
-ax[0,1].set_title('along-slope velocity')
-im = ax[1,0].pcolormesh(ly, z, np.real(w.reshape(nz, 1)
-        * np.exp(1j*ly.reshape(1,nz))), rasterized=True, cmap='RdBu_r')
-plt.colorbar(im, ax=ax[1,0])
-ax[1,0].set_title('slope-normal velocity')
-im = ax[1,1].pcolormesh(ly, z, np.real(b.reshape(nz, 1)
-        * np.exp(1j*ly.reshape(1,nz))), rasterized=True, cmap='RdBu_r')
-plt.colorbar(im, ax=ax[1,1])
-ax[1,1].set_title('buoyancy')
-ax[0,0].set_xticks([0, np.pi, 2*np.pi])
-ax[1,0].set_xlabel('phase')
-ax[1,1].set_xlabel('phase')
-ax[0,0].set_ylabel('slope-normal coordinate [m]')
-ax[1,0].set_ylabel('slope-normal coordinate [m]')
-#plt.savefig('fig/modes.pdf', dpi=300)
-
-plt.show()
-
-#%%
-#%%
-# most unstable mode
-fs =20
-plt.rcParams.update({'font.size': fs})
-
-nc  = 40
-ly = np.linspace(0, 2*np.pi, nz)
-uvel = np.real(u.reshape(nz, 1)* np.exp(1j*ly.reshape(1,nz)))
-vvel = np.real(v.reshape(nz, 1)* np.exp(1j*ly.reshape(1,nz)))
-wvel = np.real(w.reshape(nz, 1)* np.exp(1j*ly.reshape(1,nz)))
-maxu = np.max(uvel)
-
-uvel = uvel/maxu
-vvel = vvel/maxu
-wvel = wvel/maxu
-buoy = np.real(b.reshape(nz, 1)* np.exp(1j*ly.reshape(1,nz)))
-buoy = buoy/np.max(buoy)
-
-fig, ax = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(10, 10))
-# UVEL
-im = ax[0,0].contourf(ly, z, uvel, np.linspace(-1, 1, nc),vmin=-1, vmax=1, cmap='RdBu_r')
-cb = plt.colorbar(im, ax=ax[0,0])
-cb.set_ticks([-1, 0, 1])
-ax[0,0].set_title('Across-slope velocity', fontsize=fs)
-ax[0,0].grid(linestyle='--', alpha = 0.5)
-
-# VVEL
-cl = 0.4
-im = ax[0,1].contourf(ly, z, vvel, np.linspace(-cl, cl, nc),vmin=-cl, vmax=cl, cmap='RdBu_r')
-cb = plt.colorbar(im, ax=ax[0,1])
-cb.set_ticks([-cl, 0, cl])
-ax[0,1].set_title('Along-slope velocity', fontsize=fs)
-ax[0,1].grid(linestyle='--', alpha = 0.5)
-
-# WVEL
-cl = 0.02
-im = ax[1,0].contourf(ly, z, wvel, np.linspace(-cl,cl, nc),vmin=-cl, vmax=cl, cmap='RdBu_r')
-cb = plt.colorbar(im, ax=ax[1,0])
-cb.set_ticks([-cl, 0, cl])
-ax[1,0].set_title('Slope-normal velocity', fontsize=fs)
-ax[1,0].grid(linestyle='--', alpha = 0.5)
-
-# BUOY
-im = ax[1,1].contourf(ly, z, buoy, np.linspace(-1, 1, nc),vmin=-1, vmax=1, cmap='RdBu_r')
-cb = plt.colorbar(im, ax=ax[1,1])
-ax[1,1].grid(linestyle='--', alpha = 0.5)
-cb.set_ticks([-1, 0, 1])
-ax[1,1].set_title('Buoyancy', fontsize=fs)
-ax[0,0].set_xticks([0, np.pi, 2*np.pi])
-ax[1,0].set_xlabel('Phase', fontsize=fs)
-ax[1,1].set_xlabel('Phase', fontsize=fs)
-ax[0,0].set_ylabel('Slope-normal coordinate [m]', fontsize=fs)
-ax[1,0].set_ylabel('Slope-normal coordinate [m]', fontsize=fs)
-
-#labels = [item.get_text() for item in ax[1,1].get_xticklabels()]
-labels = ['0', '$\pi$', '$2\pi$']
-ax[1,1].set_xticklabels(labels)  
-#plt.savefig('fig/modes.pdf', dpi=300)
-plt.tight_layout()
-#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingPerturbations.pdf', format='pdf')
-
-plt.show()
-#%%
-#%%
+##%%
+#plt.figure(figsize=(5, 6))
+#plt.plot(BP/np.max(BP), z, linewidth=2)
+#plt.plot(SP/np.max(BP), z, linewidth=2)
+#plt.plot(DISS/np.max(BP), z, linewidth=2)
+#plt.xlabel('Kinetic energy tendency ')
+#plt.ylabel('Slope-normal coordinate [m]')
+#plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
+#leg = plt.legend([ 'Buoyancy production', 'Shear production', 'Dissipation'], frameon=True, loc=9)
+#leg.get_frame().set_alpha(.9)
+#plt.tight_layout()
+#plt.grid(linestyle='--', alpha = 0.5)
+#plt.ylim((0, 2500))
+#plt.xlim((-1.1, 1.1))
+##plt.savefig('fig/energetics.pdf')
+##plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingEnergetics.pdf')
+##%%
+## most unstable mode
+#
+#ly = np.linspace(0, 2*np.pi, nz)
+#
+#fig, ax = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(6.4, 6.4))
+#im = ax[0,0].pcolormesh(ly, z, np.real(u.reshape(nz, 1)
+#        * np.exp(1j*ly.reshape(1,nz))), rasterized=True, cmap='RdBu_r')
+#plt.colorbar(im, ax=ax[0,0])
+#ax[0,0].set_title('across-slope velocity')
+#im = ax[0,1].pcolormesh(ly, z, np.real(v.reshape(nz, 1)
+#        * np.exp(1j*ly.reshape(1,nz))), rasterized=True, cmap='RdBu_r')
+#plt.colorbar(im, ax=ax[0,1])
+#ax[0,1].set_title('along-slope velocity')
+#im = ax[1,0].pcolormesh(ly, z, np.real(w.reshape(nz, 1)
+#        * np.exp(1j*ly.reshape(1,nz))), rasterized=True, cmap='RdBu_r')
+#plt.colorbar(im, ax=ax[1,0])
+#ax[1,0].set_title('slope-normal velocity')
+#im = ax[1,1].pcolormesh(ly, z, np.real(b.reshape(nz, 1)
+#        * np.exp(1j*ly.reshape(1,nz))), rasterized=True, cmap='RdBu_r')
+#plt.colorbar(im, ax=ax[1,1])
+#ax[1,1].set_title('buoyancy')
+#ax[0,0].set_xticks([0, np.pi, 2*np.pi])
+#ax[1,0].set_xlabel('phase')
+#ax[1,1].set_xlabel('phase')
+#ax[0,0].set_ylabel('slope-normal coordinate [m]')
+#ax[1,0].set_ylabel('slope-normal coordinate [m]')
+##plt.savefig('fig/modes.pdf', dpi=300)
+#
+#plt.show()
+#
+##%%
+##%%
+## most unstable mode
+#fs =20
+#plt.rcParams.update({'font.size': fs})
+#
+#nc  = 40
+#ly = np.linspace(0, 2*np.pi, nz)
+#uvel = np.real(u.reshape(nz, 1)* np.exp(1j*ly.reshape(1,nz)))
+#vvel = np.real(v.reshape(nz, 1)* np.exp(1j*ly.reshape(1,nz)))
+#wvel = np.real(w.reshape(nz, 1)* np.exp(1j*ly.reshape(1,nz)))
+#maxu = np.max(uvel)
+#
+#uvel = uvel/maxu
+#vvel = vvel/maxu
+#wvel = wvel/maxu
+#buoy = np.real(b.reshape(nz, 1)* np.exp(1j*ly.reshape(1,nz)))
+#buoy = buoy/np.max(buoy)
+#
+#fig, ax = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(10, 10))
+## UVEL
+#im = ax[0,0].contourf(ly, z, uvel, np.linspace(-1, 1, nc),vmin=-1, vmax=1, cmap='RdBu_r')
+#cb = plt.colorbar(im, ax=ax[0,0])
+#cb.set_ticks([-1, 0, 1])
+#ax[0,0].set_title('Across-slope velocity', fontsize=fs)
+#ax[0,0].grid(linestyle='--', alpha = 0.5)
+#
+## VVEL
+#cl = 0.4
+#im = ax[0,1].contourf(ly, z, vvel, np.linspace(-cl, cl, nc),vmin=-cl, vmax=cl, cmap='RdBu_r')
+#cb = plt.colorbar(im, ax=ax[0,1])
+#cb.set_ticks([-cl, 0, cl])
+#ax[0,1].set_title('Along-slope velocity', fontsize=fs)
+#ax[0,1].grid(linestyle='--', alpha = 0.5)
+#
+## WVEL
+#cl = 0.02
+#im = ax[1,0].contourf(ly, z, wvel, np.linspace(-cl,cl, nc),vmin=-cl, vmax=cl, cmap='RdBu_r')
+#cb = plt.colorbar(im, ax=ax[1,0])
+#cb.set_ticks([-cl, 0, cl])
+#ax[1,0].set_title('Slope-normal velocity', fontsize=fs)
+#ax[1,0].grid(linestyle='--', alpha = 0.5)
+#
+## BUOY
+#im = ax[1,1].contourf(ly, z, buoy, np.linspace(-1, 1, nc),vmin=-1, vmax=1, cmap='RdBu_r')
+#cb = plt.colorbar(im, ax=ax[1,1])
+#ax[1,1].grid(linestyle='--', alpha = 0.5)
+#cb.set_ticks([-1, 0, 1])
+#ax[1,1].set_title('Buoyancy', fontsize=fs)
+#ax[0,0].set_xticks([0, np.pi, 2*np.pi])
+#ax[1,0].set_xlabel('Phase', fontsize=fs)
+#ax[1,1].set_xlabel('Phase', fontsize=fs)
+#ax[0,0].set_ylabel('Slope-normal coordinate [m]', fontsize=fs)
+#ax[1,0].set_ylabel('Slope-normal coordinate [m]', fontsize=fs)
+#
+##labels = [item.get_text() for item in ax[1,1].get_xticklabels()]
+#labels = ['0', '$\pi$', '$2\pi$']
+#ax[1,1].set_xticklabels(labels)  
+##plt.savefig('fig/modes.pdf', dpi=300)
+#plt.tight_layout()
+##plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingPerturbations.pdf', format='pdf')
+#
+#plt.show()
+#%% PERTURBATIONS STRUCTURE
 cm = 'RdBu_r'
 # most unstable mode
 fs = 18
@@ -309,12 +303,6 @@ ax4 = fig.add_subplot(gs[2:, 2:-1])
 gs2 = GridSpec(4,1)
 gs2.update(left=0.875, right=1.1)
 ax5 = fig.add_subplot(gs2[1:-1, 0])
-
-#ax1 = plt.subplot2grid((4, 5), (0, 0), colspan=2, rowspan=2)
-#ax2 = plt.subplot2grid((4, 5 ),(0, 2), colspan=2, rowspan=2)
-#ax3 = plt.subplot2grid((4, 5), (2, 0), colspan=2, rowspan=2)
-#ax4 = plt.subplot2grid((4, 5), (2, 2), colspan=2, rowspan=2)
-#ax5 = plt.subplot2grid((4, 5), (1, 4), rowspan=2)
 
 
 #fig = 
@@ -397,35 +385,3 @@ ax4.set_yticklabels(emptylabels)
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingPerturbationsCombo.pdf', format='pdf', bbox_inches='tight')
 #fig.subplots_adjust(wspace=10, vspace=0.1)
 plt.show()
-#%% ADDING MY OWN CHECK OF RI
-#Bz = np.diff(B)/np.diff(z)
-f = 2.5e-5
-N2hat = Bz + N**2*np.cos(tht)
-M2hat = N**2*np.sin(tht)
-#N2 = N2hat*np.cos(tht) + M2hat*np.sin(tht)
-#M2 = M2hat*np.cos(tht) - N2hat*np.sin(tht)
-N2 = N**2 + Bz*np.cos(tht)
-M2 = -Bz*np.sin(tht)
-
-Ri = N2*f**2/(M2**2)
-#dt = np.sqrt(2*kap_1/f)
-#S = N2/(f**2)* np.tan(tht)**2
-#delt = np.sqrt(S*Ri)
-#delt = N2hat/M2hat*np.tan(tht)
-#thtiso = np.arctan(M2/N2)
-#thtiso = np.arctan(M2hat/N2hat)
-
-#iso = np.zeros((M2.shape[0], 2))
-#iso[:,0] = M2
-#iso[:,1] = N2
-#sl = np.zeros((M2.shape[0], 2))
-#sl[:,0] = 1
-#sl[:,1] = np.tan(tht)
-
-plt.figure()
-#plt.plot(-N**2/Bz - 1, z)
-plt.plot(Ri , z)
-#plt.plot(Bz*z, z)
-#plt.axhline(y=dt, color='r', linestyle='-')
-#plt.ylim((0, 500))
-plt.xlim((0, 1000))

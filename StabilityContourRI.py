@@ -16,7 +16,7 @@ from scipy import interpolate
 
 plt.rc('text', usetex=True)
 plt.rcParams.update({'font.size': 18})
-directoryname = "../SlopeAngleRiVar3/"
+directoryname = "../SlopeAngleRiVar3/" # directory to load from
 directory = os.fsencode(directoryname)
 
 ntht = 256
@@ -34,14 +34,12 @@ for file in os.listdir(directory):
     print(filename)
     if filename.endswith(".npz"): 
         a = np.load(directoryname+filename);
-#        plt.semilogx(a['ll'], a['gr'])
         rivec[counter] = a['Ri']
         gr[counter, :] = a['gr']#[:,-1]
         maxgr[counter] = np.max(gr[counter,:])
         delta[counter] = a['Bz'][-1]/(a['f']*a['Vz'][-1]*np.cos(a['tht']))*a['tht']
         grn[counter,:] = (gr[counter,:]/a['f'])*(rivec[counter]**(1/2))
         counter = counter + 1
-#        plt.plot(a['ll'], gr[counter-1,:]*np.sqrt(a['Bz'][-1])/(a['f']*a['Vz'][-1]))
         continue
     else:
         continue
@@ -53,18 +51,12 @@ gr = gr[idx,:]
 grn = grn[idx,:]
 grn = gr/a['f']
 
+# DESPIKE
 grnd = np.zeros(grn.shape)
 grnd[1:-1,:] = grn[1:-1,:]-grn[0:-2,:]
 grn[grnd>0.1] = np.nan
 grnd[:, 1:-1] = grn[:, 1:-1]-grn[:,0:-2]
 grn[np.abs(grnd)>0.05] = np.nan
-#grn[grn==0] = np.nan
-#valid_mask = ~np.isnan(grn)
-#coords = np.array(np.nonzero(valid_mask)).T
-#values = grn[valid_mask]
-#it = interpolate.LinearNDInterpolator(coords, values)
-#grn = it(list(np.ndindex(grn.shape))).reshape(grn.shape)
-
 array = np.ma.masked_invalid(grn)
 ll, tt = np.meshgrid(a['ll'], rivec)
 l1 = ll[~array.mask]

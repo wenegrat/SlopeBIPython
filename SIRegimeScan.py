@@ -9,9 +9,8 @@ logger = logging.getLogger(__name__)
 
 # parameters
 N = 1e-4 # buoyancy frequency
-Pr = 0.1
+Pr = 0.1 # Here this means f/N
 f = Pr*N # Coriolis parameter
-#tht = -5e-2 # slope angle
 H = 100. # domain height
 Ri =1.25 # CI PARAMETERS
 S = 2.75
@@ -41,8 +40,8 @@ domain = de.Domain([z_basis], np.complex128)
 # LINEAR STABILITY
 for Ri in rivec:
     for S in svec:
-        Lmd = N/Ri**(1/2) # shear
-        tht = np.arctan(f/N*S**(1/2))
+        Lmd = N/Ri**(1/2) # vertical shear
+        tht = np.arctan(f/N*S**(1/2)) # Use definition of burger number
         print('Ri: ' + str(Ri) + '  S: ' + str(S))
         
         problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p'], eigenvalue='omg')
@@ -99,7 +98,7 @@ for Ri in rivec:
             return solver.eigenvalues[idx[-1]].imag
 
         # get max growth rates
-        gr = np.array([max_growth_rate(l, 0) for l in ll])
+        gr = np.array([max_growth_rate(l, 0) for l in ll]) # note this is actually scanning k wavenumbers
         
         # get full eigenvectors and eigenvalues for l with largest growth
         idx = sorted_eigen(ll[np.argmax(gr)], 0.)

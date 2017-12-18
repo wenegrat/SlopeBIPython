@@ -21,27 +21,20 @@ logger = logging.getLogger(__name__)
 directoryname = "/data/thomas/jacob13/STABILITY/SlopeAngleRi10/" # Where to save the output
 
 
-
 # Physical parameters
 f = 1e-4
-f = 2.5e-5
+
 tht = 0
 Pr = 1
 
 H = 200
 Ri = 10
-#Bzmag = 2.5e-5
-#Shmag = np.sqrt(Bzmag/Ri)
+
 Shmag = .1/H
 Bzmag = Shmag**2*Ri
-#Shmag = 0;
+
 thtarr = np.linspace(-2, 2, 256)*Shmag*f/Bzmag
 
-
-#%%
-#Ri = 
-#Shmag = 1e-4
-#Bzmag = (Shmag/Ro)**2 # Ro = Uz/N
 # Grid Parameters
 nz = 256
 
@@ -57,8 +50,6 @@ z = domain.grid(0)
 
 # Define Stability Analysis Parameters
 
-kap = domain.new_field(name='kap')
-kap['g'] = 0*np.ones(z.shape)
 U = domain.new_field(name='U')
 U['g'] = 0*z
 Uz = domain.new_field(name='Uz')
@@ -82,7 +73,7 @@ for tht in thtarr:
 
     V['g'] = Shmag*(z)/np.cos(tht)
 
-    problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p'], eigenvalue='omg', tolerance = 1e-12)
+    problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p'], eigenvalue='omg', tolerance = 1e-10)
     problem.parameters['tht'] = tht
     problem.parameters['V'] = V
     problem.parameters['Uz'] = Uz
@@ -90,7 +81,6 @@ for tht in thtarr:
     problem.parameters['NS'] = Bz
     problem.parameters['f'] = f
     problem.parameters['tht'] = tht
-    problem.parameters['kap'] = kap
     problem.parameters['Pr'] = Pr
     problem.parameters['k'] = 0. # will be set in loop
     problem.parameters['l'] = 0. # will be set in loop
@@ -143,16 +133,10 @@ for tht in thtarr:
     else:
         CW.Reduce(growth_global, growth_global, op=MPI.SUM, root=0)
     
-    # Plot growth rates from root process
+    # Save growth rates from root process
     if CW.rank == 0:
-#        plt.plot(ly_global*np.sqrt(Bz['g'][-1])*H/f, growth_global*np.sqrt(Bz['g'][-1])/(f*Vz['g'][-1]), '.')
-#        plt.ylim((0, 1))
-#        plt.xlabel(r'$ly$')
-#        plt.ylabel(r'$\mathrm{Im}(\omega)$')
-#        plt.title('Growth Rates')
-#        plt.savefig('growth_rates_%.4f_%.1f.png' %(tht, nz))
         
         name = 'StabilityData_'+str(tht) # Can vary this depending on parameter of interest
-        np.savez(directoryname+name + '.npz', nz=nz, tht=tht, z=z, f=f, kap=kap['g'], Pr=Pr, U=U['g'],
+        np.savez(directoryname+name + '.npz', nz=nz, tht=tht, z=z, f=f, Pr=Pr, U=U['g'],
         V=V['g'], B=B['g'], Bz=Bz['g'], Vz=Vz['g'], H = H, ll=ly_global,
         gr=growth_global)

@@ -25,25 +25,14 @@ for i in range(0, nri):
 #Rif = np.outer(Ri, Ri)plt
 delta = (Sf*Rif)**(1/2)
 Pr = .1
-SICI = (1/delta)*(1-Pr*(1-delta/Rif))**(-1)
+SICI = (1/delta)*(1-Pr*(1-delta/Rif))**(-1) # INVERSE DEFINITION FROM MS, IE VSP/LSP
 BICI = delta
-CIBI = delta*(1+Rif)/(Rif)
+#CIBI = delta*(1+Rif)/(Rif) 
 CCRIT = delta/Rif
 SICRIT = Rif 
 
-#plt.figure()
-##plt.contourf(Ri, S, delta)
-##plt.contourf(Ri, S, delta, np.linspace(0, 10, 11))
-##plt.contour(Ri, S,CIBI, levels=[1], colors='k')
-#plt.contour(Ri, S,CCRIT, levels=[1], colors='r', linestyles='dashed')
-##plt.contour(Ri, S,SICRIT, levels=[1], colors='g', linestyles='dashed')
-#plt.contour(Ri, S,delta, levels=[1, 2], colors='k', linestyles='dotted')
-##plt.contour(Ri, S,delta, levels=[2], colors='b', linestyles='dashed')
-#plt.contour(Ri, S,(1/Rif)*(1+delta), levels=[1], colors='b', linestyles='dashed')
-#plt.contour(Ri, S,SICI, levels=[1], colors='r', linestyles='dashed')
 
-
-SICRIT = (1/Rif)*(1+delta)>1
+SICRIT = (1/Rif)*(1+delta)>1 
 VSHS = (1/delta)*(1-Pr*(1-delta/Rif))**(-1) > 1
 CCRIT = delta/Rif > 1
 maskSI = np.nan*np.zeros((Rif.shape))
@@ -95,6 +84,7 @@ plt.annotate(r'CI',
 plt.annotate(r'SI/CI',
              xy=(1.75, 1.25), xycoords='data', xytext=(+0, +0), 
              textcoords='offset points', fontsize=16)
+# PLOT NUMERIC SOLS
 maskPVNum = np.nan*np.zeros(LSP.shape)
 maskPVNum[PV<0] = 1
 maskPVNum[CI<1] = np.nan
@@ -117,13 +107,13 @@ plt.tight_layout()
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/RegimeDiagram.eps', format='eps', dpi=1000)
 
 #%%
-plt.figure()
-phi = 1/2*np.arctan( (2*Pr*Rif**(-1/2))/(1 - Pr**2*(1-delta/Rif))) 
-phit = 1/2*( (2*Pr*Rif**(-1/2))/(1 - Pr**2*(1-delta/Rif)))
-plt.contourf(Ri, S, (1/delta)*(1-Pr*(1-delta/Rif))**(-1), np.linspace(0, 5, 20))
-plt.colorbar()
-plt.ylim((0,2))
-plt.xlim((0, 5))
 #plt.figure()
-#plt.plot(np.tan(phi[1,:]))
-#plt.plot(phit[1,:])
+#phi = 1/2*np.arctan( (2*Pr*Rif**(-1/2))/(1 - Pr**2*(1-delta/Rif))) 
+#phit = 1/2*( (2*Pr*Rif**(-1/2))/(1 - Pr**2*(1-delta/Rif)))
+#plt.contourf(Ri, S, (1/delta)*(1-Pr*(1-delta/Rif))**(-1), np.linspace(0, 5, 20))
+#plt.colorbar()
+#plt.ylim((0,2))
+#plt.xlim((0, 5))
+##plt.figure()
+##plt.plot(np.tan(phi[1,:]))
+##plt.plot(phit[1,:])
