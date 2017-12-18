@@ -24,29 +24,31 @@ logger = logging.getLogger(__name__)
 
 
 # Global parameters
-directoryname = "/data/thomas/jacob13/STABILITY/SlopeAngleRi1LR/"
+directoryname = "/home/jacob/dedalus/TestMixingLinear"
 
 # Physical parameters
 f = 1e-4
+f = 2.5e-5
 tht = 0
 Pr = 1
-H = 200
-Ri = 1
+H = 500
+Ri = 5
 #Bzmag = 2.5e-5
 #Shmag = np.sqrt(Bzmag/Ri)
-Shmag = .1/H
-Bzmag = Shmag**2
+Shmag = .04/H
+Bzmag = Shmag**2*Ri
 #Shmag = 0;
 thtarr = np.linspace(-2, 2, 32)*Shmag*f/Bzmag
-
+thtarr = [2e-3]
 #%%
 #Ri = 
 #Shmag = 1e-4
 #Bzmag = (Shmag/Ro)**2 # Ro = Uz/N
 # Grid Parameters
-nz = 128#256
+nz = 64#256
 
 ly_global = np.linspace(1e-2, 4.25, 192)*f/(np.sqrt(Bzmag)*H)
+ly_global = np.linspace(1e-2, 4.25, 64)*f/(np.sqrt(Bzmag)*H)
 
 # Create bases and domain
 # Use COMM_SELF so keep calculations independent between processes
@@ -58,7 +60,7 @@ z = domain.grid(0)
 # Define Stability Analysis Parameters
 
 kap = domain.new_field(name='kap')
-kap['g'] = 1e-5*np.ones(z.shape)
+kap['g'] = 0*np.ones(z.shape)
 U = domain.new_field(name='U')
 U['g'] = 0*z
 Uz = domain.new_field(name='Uz')

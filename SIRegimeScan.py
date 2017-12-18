@@ -19,7 +19,7 @@ S = 2.75
 #Ri = 0.5  #SI PARAMETERS
 #S = 1
 
-directoryname = '/home/jacob/dedalus/SIRegimeScan/'
+directoryname = '/home/jacob/dedalus/SIRegimeScan2/'
 
 # slope parameter
 #print(np.tan(tht)*N**2/(f*Lmd))
@@ -115,9 +115,9 @@ for Ri in rivec:
         z = domain.grid(0)
 
         Vzhat = Lmd
-        VSP = -2*np.real((w['g'])*np.conj(v['g'])*Vzhat*np.cos(tht) + np.conj(v['g'])*u['g']*Vzhat*np.sin(tht))
+        VSP = -2*np.real((w['g'])*np.conj(v['g'])*Vzhat*np.cos(tht) + 0*np.conj(v['g'])*u['g']*Vzhat*np.sin(tht))
         Vx = -Lmd/np.cos(tht)*np.sin(tht)
-        LSP = -2*np.real(np.conj(v['g'])*u['g']*np.cos(tht) -(w['g'])*np.conj(v['g'])*np.sin(tht))*Vx
+        LSP = -2*np.real(0*np.conj(v['g'])*u['g']*np.cos(tht) -(w['g'])*np.conj(v['g'])*np.sin(tht))*Vx
 
         BP = 2*np.real((u['g']*np.sin(tht)+w['g']*np.cos(tht))*np.conj(b['g']))
         HHF = -2*np.real(f*Lmd/N**2*(u['g']*np.cos(tht)-w['g']*np.sin(tht))*np.conj(b['g']))
