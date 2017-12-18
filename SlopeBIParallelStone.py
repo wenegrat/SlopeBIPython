@@ -26,10 +26,13 @@ logger = logging.getLogger(__name__)
 # Global parameters
 directoryname = "/data/thomas/jacob13/STABILITY/SlopeAngleRi10/"
 
+
 # Physical parameters
 f = 1e-4
+f = 2.5e-5
 tht = 0
 Pr = 1
+
 H = 200
 Ri = 10
 #Bzmag = 2.5e-5
@@ -39,6 +42,7 @@ Bzmag = Shmag**2*Ri
 #Shmag = 0;
 thtarr = np.linspace(-2, 2, 256)*Shmag*f/Bzmag
 
+
 #%%
 #Ri = 
 #Shmag = 1e-4
@@ -47,6 +51,7 @@ thtarr = np.linspace(-2, 2, 256)*Shmag*f/Bzmag
 nz = 256
 
 ly_global = np.linspace(1e-2, 4.25, 256)*f/(np.sqrt(Bzmag)*H)
+
 
 # Create bases and domain
 # Use COMM_SELF so keep calculations independent between processes
@@ -58,7 +63,7 @@ z = domain.grid(0)
 # Define Stability Analysis Parameters
 
 kap = domain.new_field(name='kap')
-kap['g'] = 1e-5*np.ones(z.shape)
+kap['g'] = 0*np.ones(z.shape)
 U = domain.new_field(name='U')
 U['g'] = 0*z
 Uz = domain.new_field(name='Uz')

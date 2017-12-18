@@ -40,6 +40,9 @@ oms = omegas.real
 
 # Make Figure
 #%%
+plt.rcParams['text.usetex'] = True
+plt.rcParams['mathtext.fontset'] = 'stix'
+plt.rcParams['font.family'] = 'STIXGeneral'
 nc = 41
 maxc = 0.05
 fs =18
@@ -52,29 +55,29 @@ CS = ax[0].contour(ll, delta, om, np.linspace(0, maxc, 6),colors='0.5' )
 ax[0].set_yticks([-2, -1, 0, 1, 2])
 ax[0].tick_params(axis='both', which='major', labelsize=fs)
 ax[0].clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
-ax[0].set_ylabel('$\delta$', fontsize=22)
-ax[0].set_xlabel('$\mathrm{Ri}^{1/2}l\'$', fontsize=18)
+ax[0].set_ylabel('Slope parameter, $\\alpha$', fontsize=20)
+ax[0].set_xlabel('Along-slope wavenumber, $l^*$', fontsize=20)
 ax[0].set_ylim((-2,2))
 ax[0].set_xlim((0, 4))
 bb = dict(boxstyle='Square', fc='w')
-ax[0].text(0.15, 1.65, '$\delta_T = 0$', fontsize=20, bbox=bb)
+ax[0].text(0.15, 1.65, '$\\alpha^{ub} = 0$', fontsize=20, bbox=bb)
 
 ax[1].grid(linestyle='--', alpha = 0.5)
 IM = ax[1].contourf(ll, delta, oms,
       np.linspace(0, maxc, nc),vmin=-maxc, vmax=maxc, cmap='RdBu_r', labelsize=20)
 CS = ax[1].contour(ll, delta, oms, np.linspace(0, maxc, 6),colors='0.5' )
 ax[1].clabel(CS, inline=1, fontsize=10, fmt='%1.2f')
-ax[1].set_xlabel('$\mathrm{Ri}^{1/2}l\'$', fontsize=18)
+ax[1].set_xlabel('Along-slope wavenumber, $l^*$', fontsize=20)
 ax[1].tick_params(axis='both', which='major', labelsize=fs)
 ax[1].set_ylim((-2,2))
 ax[1].set_xlim((0, 4))
-ax[1].text(0.15, 1.65, '$\delta_T = \delta$', fontsize=20, bbox=bb)
+ax[1].text(0.15, 1.65, '$\\alpha^{ub} = \\alpha$', fontsize=20, bbox=bb)
 plt.tight_layout()
 
 cbar = fig.colorbar(IM,  ax=ax.ravel().tolist(), orientation='horizontal', shrink = 0.5)
-cbar.set_label('${\omega}/f$', fontsize=22)
+cbar.set_label('Growth rate, ${\omega}_i$', fontsize=20)
 cbar.set_ticks(np.linspace(0, maxc, 6))
-#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/QGPlot.eps', format='eps', dpi=1000)
+plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/QGPlot.eps', format='eps', dpi=1000)
 #%%
 #plt.figure()
 #plt.plot(ll, om[250,:])

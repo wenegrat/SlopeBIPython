@@ -60,24 +60,31 @@ maskPV[np.logical_not(SICRIT)] = 1
 maskVS = np.nan*np.zeros((Rif.shape))
 maskVS[SICRIT] = 1
 #maskSI[maskSI!=1] = NaN
+
+plt.rcParams['text.usetex'] = True
+plt.rcParams['mathtext.fontset'] = 'stix'
+plt.rcParams['font.family'] = 'STIXGeneral'
+plt.rcParams.update({'font.size': 16})
 cl = 8
-plt.figure()
+plt.figure(figsize=(6, 4))
 plt.contourf(Ri, S, maskSI*4, np.linspace(0, cl, 10), cmap='Greys')
 plt.contourf(Ri, S, maskCI*3, np.linspace(0,cl, 10), cmap='Greys')
 plt.contourf(Ri, S, maskMI*2, np.linspace(0, cl, 10), cmap='Greys')
 plt.contourf(Ri, S, maskPV*1, np.linspace(0, cl, 10), cmap='Greys')
 plt.contour(Ri, S,delta/Rif, levels=[1], colors='green', linestyles='dashed') 
 CL = plt.contour(Ri, S,delta*maskPV, levels=[1, 2], colors='k', linestyles='dotted')
-plt.clabel(CL, inline=1, fontsize = 12, fmt='$\delta$ $=$ %1.0f')
+mlocs = [(4.5, 0.25), (4.65, 0.9)]
+plt.clabel(CL, inline=1, fontsize = 12, fmt='$\\alpha$ $=$ %1.0f', manual=mlocs)
 plt.contour(Ri, S,SICI*maskVS, levels=[1], colors='b', linestyles='dashed')
 plt.contour(Ri, S,(1/Rif)*(1+delta), levels=[1], colors='r', linestyles='dashed')
 #plt.plot(1.25, 2.75, marker='x', color='k')
 #plt.plot(0.5, 0.1, marker='x', color='k')
-plt.xlabel('Ri')
-plt.ylabel('S')
+plt.xlabel('Richardson number, Ri')
+plt.ylabel('Slope Burger number, S')
+plt.title('Instability regimes in the BBL')
 
 plt.annotate(r'BI',
-             xy=(4, 0.5), xycoords='data', xytext=(+0, +0), 
+             xy=(3.25, 0.65), xycoords='data', xytext=(+0, +0), 
              textcoords='offset points', fontsize=16)
 plt.annotate(r'SI',
              xy=(0.75, 0.35), xycoords='data', xytext=(+0, +0), 
@@ -93,6 +100,7 @@ maskPVNum[PV<0] = 1
 maskPVNum[CI<1] = np.nan
 plt.contour(rivec, svec, np.transpose(LSP/VSP*maskPVNum), levels=[1], colors='b')
 
+plt.tight_layout()
 #plt.ylim((0, 3))
 #plt.xlim((0, 10))
 #plt.colorbar()

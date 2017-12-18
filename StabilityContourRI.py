@@ -16,7 +16,7 @@ from scipy import interpolate
 
 plt.rc('text', usetex=True)
 plt.rcParams.update({'font.size': 18})
-directoryname = "../SlopeAngleRiVar2/"
+directoryname = "../SlopeAngleRiVar3/"
 directory = os.fsencode(directoryname)
 
 ntht = 256
@@ -98,6 +98,62 @@ plt.tight_layout()
 print("Maximum Ri processed: "+str(np.max(rivec[rivec!=0])))
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/RiStability.eps', format='eps', dpi=1000)
 #
+#%%
+plt.rcParams['text.usetex'] = True
+plt.rcParams['mathtext.fontset'] = 'stix'
+plt.rcParams['font.family'] = 'STIXGeneral'
+nc = 41
+maxc = 0.3
+fs =20
+
+grn = grn.astype(float)
+fig = plt.figure(figsize=(9, 4.5))
+ax1 = fig.add_subplot(111)
+
+
+plt.grid(linestyle='--', alpha = 0.5)
+im = ax1.contourf(a['ll']/(a['f']/(a['Vz'][-1]*a['H'])), rivec, 
+               grn,np.linspace(0, maxc, nc),vmin=-maxc, vmax=maxc, cmap='RdBu_r', labelsize=20)
+ax1.set_xlim((0,3))
+cbar = fig.colorbar(im, pad=0.125)
+cbar.set_ticks(np.linspace(0, maxc, 7))
+cbar.set_label('Growth rate, ${\omega}_i$', fontsize=20, labelpad=10)
+CS = ax1.contour(a['ll']/(a['f']/(a['Vz'][-1]*a['H'])), rivec, grn, 
+            np.linspace(.05, maxc, 6),colors='0.5' )
+ax1.tick_params(axis='both', which='major', labelsize=fs)
+ax1.clabel(CS, inline=1, fontsize = 10, fmt='%1.2f')
+ax1.set_xlabel('Along-slope wavenumber, $l$', fontsize= 20)
+ax1.set_ylabel('$\mathrm{Ri}$', fontsize=20)
+ax1.set_xticks([0, 1, 2, 3])
+
+
+
+
+#print("Maximum Ri processed: "+str(np.max(rivec[rivec!=0])))
+
+#newticks = np.array([2*np.pi/100e3, 2*np.pi/10e3, 2*np.pi/1e3])
+
+def tickfun(X):
+    Y = 2*np.pi/X/1000
+    return ['%.1f' % z for z in Y]
+#
+#ax2.set_xticks(newticks)
+ax2 = ax1.twinx()
+ax2.plot(a['ll']/(a['f']/(a['Vz'][-1]*a['H'])), delta, linestyle='none')
+ax2.set_xlim(ax1.get_xlim())
+ax2.set_ylim((0, delta[-1]))
+#
+#ax2.set_xticklabels(tickfun(newticks))
+ax2.set_ylabel('Slope parameter, $\\alpha$', labelpad=8, fontsize=20)
+ax1.set_xlim((0, 3))
+ax2.set_xlim((0, 3))
+ax2.set_yticks(np.linspace(0, 0.5, 6))
+plt.tight_layout()
+#ax2.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
+#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/RiStability.eps', format='eps', dpi=1000)
+
+
+
 #%%
 ## Make plot comparing Ri=1 with Stone solution
 #k = a['ll']/(a['f']/(a['V'][-1]))

@@ -115,7 +115,9 @@ for Ri in rivec:
         z = domain.grid(0)
 
         Vzhat = Lmd
-        VSP = -2*np.real((w['g'])*np.conj(v['g'])*Vzhat*np.cos(tht) +0* np.conj(v['g'])*u['g']*Vzhat*np.sin(tht))
+
+        VSP = -2*np.real((w['g'])*np.conj(v['g'])*Vzhat*np.cos(tht) + np.conj(v['g'])*u['g']*Vzhat*np.sin(tht))
+
         Vx = -Lmd/np.cos(tht)*np.sin(tht)
         LSP = -2*np.real(0*np.conj(v['g'])*u['g']*np.cos(tht) -(w['g'])*np.conj(v['g'])*np.sin(tht))*Vx
 
