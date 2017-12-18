@@ -64,7 +64,7 @@ Vz = domain.new_field(name='Vz')
 Bz = domain.new_field(name='Bz')
 B = domain.new_field(name='B')
 
-for i in range(0, ntg, 6):
+for i in range(0, ntg, 3):
     
     problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
             'bz'], eigenvalue='omg', tolerance = 1e-10)
@@ -124,7 +124,7 @@ for i in range(0, ntg, 6):
     problem.add_bc('left(bz) = 0')
     problem.add_bc('right(uz) = 0')
     problem.add_bc('right(vz) = 0')
-    problem.add_bc('right(w) = 0')
+    problem.add_bc('right(w) = -right(u)*tan(tht)')
     problem.add_bc('right(bz) = 0')
     
     solver = problem.build_solver()

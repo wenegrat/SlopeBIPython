@@ -19,13 +19,13 @@ Pr = 1 # Prandtl number
 H = 2500. # domain height
 
 # along-slope wavenumbers
-ll_global = np.logspace(-5, -2, 128)
+ll_global = np.logspace(-5, -2, 192)
 
 # number of grid points
-nz = 64
+nz = 256
 
 # file name that results are saved in
-directory = '/home/jacob/dedalus/'
+directory = '/data/thomas/jacob13/STABILITY/'
 
 # build domain
 z_basis = de.Chebyshev('z', nz, interval=(0, H))
@@ -195,7 +195,7 @@ if CW.rank == 0:
     DISS = -kap['g']*(np.abs(uz['g'])**2 + np.abs(vz['g'])**2)
     # SAVE TO FILE
     #
-    np.savez(directory + 'MixingStabilityOut' + '.npz', nz=nz, N=N, tht=tht, z=z, kap=kap['g'], Pr=Pr, U=U['g'],
-            V=V['g'], B=B['g'], Bz=['Bz'], u=u['g'], v=v['g'], w=w['g'], b=b['g'], ll=ll_global,
+    np.savez(directory + 'MixingStabilityOut' + '.npz', nz=nz, N=N, tht=tht, z=z, kap=kap['g'], Pr=Pr, U=U['g'], Uz=Uz['g'], Vz=Vz['g'],
+            V=V['g'], B=B['g'], Bz=Bz['g'], u=u['g'], v=v['g'], w=w['g'], b=b['g'], ll=ll_global,
             gr=growth_global, SP=SP, BP=BP, DISS=DISS)
 

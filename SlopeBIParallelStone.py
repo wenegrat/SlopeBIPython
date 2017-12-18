@@ -17,31 +17,36 @@ logger = logging.getLogger(__name__)
 
 
 # Global parameters
-directoryname = "/home/jacob/dedalus/TestMixingLinear" # Where to save the output
+
+directoryname = "/data/thomas/jacob13/STABILITY/SlopeAngleRi10/" # Where to save the output
+
+
 
 # Physical parameters
 f = 1e-4
 f = 2.5e-5
 tht = 0
 Pr = 1
-H = 500
-Ri = 5
+
+H = 200
+Ri = 10
 #Bzmag = 2.5e-5
 #Shmag = np.sqrt(Bzmag/Ri)
-Shmag = .04/H
+Shmag = .1/H
 Bzmag = Shmag**2*Ri
 #Shmag = 0;
-thtarr = np.linspace(-2, 2, 32)*Shmag*f/Bzmag
-thtarr = [2e-3]
+thtarr = np.linspace(-2, 2, 256)*Shmag*f/Bzmag
+
+
 #%%
 #Ri = 
 #Shmag = 1e-4
 #Bzmag = (Shmag/Ro)**2 # Ro = Uz/N
 # Grid Parameters
-nz = 64#256
+nz = 256
 
-ly_global = np.linspace(1e-2, 4.25, 192)*f/(np.sqrt(Bzmag)*H)
-ly_global = np.linspace(1e-2, 4.25, 64)*f/(np.sqrt(Bzmag)*H)
+ly_global = np.linspace(1e-2, 4.25, 256)*f/(np.sqrt(Bzmag)*H)
+
 
 # Create bases and domain
 # Use COMM_SELF so keep calculations independent between processes
