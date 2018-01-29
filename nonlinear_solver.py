@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 # Parameters
 directoryname = '/data/thomas/jacob13/STABILITY/NLSIM/'
 ly_global = np.logspace(-5, -2, 192)
+OD = False
 
 Lx, Ly, Lz = (50e3,50e3, 500.)
 f = 1e-4 # Coriolis parameter
@@ -46,12 +47,12 @@ VINT = 0.1
 Shmag = VINT/BLH
 
 
-nz = 64
-nx = 128
-ny = 128
+nz = 16
+nx = 32
+ny = 32
 #%% 1D STABILITY
 z_basis = de.Chebyshev('z', nz, interval=(0,Lz))
-domain = de.Domain([z_basis], grid_dtype=np.complex128, comm=MPI.COMM_SELF)
+domain = de.Domain([z_basis], grid_dtype=np.float64, comm=MPI.COMM_SELF)
 z = domain.grid(0)
 
 # Define Stability Analysis Parameters
@@ -74,8 +75,8 @@ tpoint = np.floor( next((x[0] for x in enumerate(z) if x[1]>BLH)))
 tpoint = int(tpoint)
 Bz['g'][0:tpoint] = Bzbl    
 Vz['g'][0:tpoint] = Shmag
-#Bt[1:nz] = integrate.cumtrapz(Bz['g']+N**2, z)
-#B['g'] = Bt
+Bt[1:nz] = integrate.cumtrapz(Bz['g']+N**2, z)
+B['g'] = Bt
 
 V['g'][1:nz] = integrate.cumtrapz(Vz['g'], z)
 V['g'][0] = 0
@@ -122,45 +123,46 @@ problem.add_bc('right(bz) = 0')
 solver = problem.build_solver()
 
 #%%
-# Create function to compute max growth rate for given kx
-def max_growth_rate(ly):
-    logger.info('Computing max growth rate for ly = %f' %ly)
-    # Change kx parameter
-    problem.namespace['l'].value = ly
-    problem.namespace['k'].value = 0 # for now only considering baroclinic axis
-    # Solve for eigenvalues with sparse search near zero, rebuilding NCCs
-#    solver.solve_sparse(solver.pencils[0], N=10, target=0, rebuild_coeffs=True)
-    solver.solve_dense(solver.pencils[0], rebuild_coeffs=True)
-    omg = solver.eigenvalues
-    omg[np.isnan(omg)] = 0.
-    omg[np.isinf(omg)] = 0.
-    idx = np.argsort(omg.imag)
-#        print(str(idx[-1]))
-    # Return largest imaginary part
-    return omg[idx[-1]].imag
-
-# Compute growth rate over local wavenumbers
-ly_local = ly_global[CW.rank::CW.size]
-
-t1 = time.time()
-growth_local = np.array([max_growth_rate(ly) for ly in ly_local])
-t2 = time.time()
-logger.info('Elapsed solve time: %f' %(t2-t1))
-
-# Reduce growth rates to root process
-growth_global = np.zeros_like(ly_global)
-growth_global[CW.rank::CW.size] = growth_local
-if CW.rank == 0:
-    CW.Reduce(MPI.IN_PLACE, growth_global, op=MPI.SUM, root=0)
-else:
-    CW.Reduce(growth_global, growth_global, op=MPI.SUM, root=0)
-
-# Plot growth rates from root process
-if CW.rank == 0:
-    name = 'StabilityData_'+str(tht) # Can vary this depending on parameter of interest
-    np.savez(directoryname+name + '.npz', nz=nz, tht=tht, z=z, f=f, U=U['g'],
-    V=V['g'], B=B['g'], Bz=Bz['g'], Vz=Vz['g'], Lz = Lz, ll=ly_global,
-    gr=growth_global)
+if OD:
+    # Create function to compute max growth rate for given kx
+    def max_growth_rate(ly):
+        logger.info('Computing max growth rate for ly = %f' %ly)
+        # Change kx parameter
+        problem.namespace['l'].value = ly
+        problem.namespace['k'].value = 0 # for now only considering baroclinic axis
+        # Solve for eigenvalues with sparse search near zero, rebuilding NCCs
+    #    solver.solve_sparse(solver.pencils[0], N=10, target=0, rebuild_coeffs=True)
+        solver.solve_dense(solver.pencils[0], rebuild_coeffs=True)
+        omg = solver.eigenvalues
+        omg[np.isnan(omg)] = 0.
+        omg[np.isinf(omg)] = 0.
+        idx = np.argsort(omg.imag)
+    #        print(str(idx[-1]))
+        # Return largest imaginary part
+        return omg[idx[-1]].imag
+    
+    # Compute growth rate over local wavenumbers
+    ly_local = ly_global[CW.rank::CW.size]
+    
+    t1 = time.time()
+    growth_local = np.array([max_growth_rate(ly) for ly in ly_local])
+    t2 = time.time()
+    logger.info('Elapsed solve time: %f' %(t2-t1))
+    
+    # Reduce growth rates to root process
+    growth_global = np.zeros_like(ly_global)
+    growth_global[CW.rank::CW.size] = growth_local
+    if CW.rank == 0:
+        CW.Reduce(MPI.IN_PLACE, growth_global, op=MPI.SUM, root=0)
+    else:
+        CW.Reduce(growth_global, growth_global, op=MPI.SUM, root=0)
+    
+    # Plot growth rates from root process
+    if CW.rank == 0:
+        name = 'StabilityData_'+str(tht) # Can vary this depending on parameter of interest
+        np.savez(directoryname+name + '.npz', nz=nz, tht=tht, z=z, f=f, U=U['g'],
+        V=V['g'], B=B['g'], Bz=Bz['g'], Vz=Vz['g'], Lz = Lz, ll=ly_global,
+        gr=growth_global)
 
 #%% 3D PROBLEM
 # Create bases and domain
@@ -193,7 +195,7 @@ problem.substitutions['HV(A)'] = '-A4*(dx(dx(dx(dx(A)))) + 2*dx(dx(dy(dy(A)))) +
 problem.substitutions['zf'] = 'x*sin(tht) + z*cos(tht)'
 problem.substitutions['havg(A)'] = "integ(A, 'x', 'y')/L**2"
 problem.substitutions['prime(A)'] = "A - havg(A)"
-problem.substititions['EKE']  = 'prime(u)**2 + prime(v)**2'
+problem.substitutions['EKE']  = 'prime(u)**2 + prime(v)**2'
 problem.substitutions['avg(A)'] = "integ(A, 'x', 'y', 'z')/L**2"
 problem.substitutions['vint(A)'] = "integ(A, 'z')"
 
@@ -236,8 +238,7 @@ uz = solver.state['uz']
 vz = solver.state['vz']
 
 # define initial condtions
-b['g'][1:nz] = integrate.cumtrapz(Bz['g'], z)
-b['g'][0] = 0
+b['g']= B['g']
 u['g']= U
 v['g']= V
 
