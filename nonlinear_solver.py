@@ -41,20 +41,23 @@ logger = logging.getLogger(__name__)
 
 
 # Parameters
-Lx, Ly, Lz = (5e3,5e3, 100.)
+Lx, Ly, Lz = (10e3,10e3, 100.)
 f = 1e-4 # Coriolis parameter
-N2 = (12*f)**2
-M2 = (6*f)**2
-tht = 2e-3 # slope angle
+#N2 = (12*f)**2
+M2 = (1*f)**2
+Ri = 1
+N2 = Ri*(M2**2/f**2)
+tht = 0 # slope angle
 kapp = 1e-5
+kapf = 5e5
 nu = 1e-5
 
 # Create bases and domain
 start_init_time = time.time()
-x_basis = de.Fourier('x', 64, interval=(0, Lx), dealias=3/2)
-y_basis = de.Fourier('y', 64, interval=(0, Ly), dealias=3/2)
-z_basis = de.Chebyshev('z', 32, interval=(0, Lz), dealias=3/2)
-domain = de.Domain([x_basis, y_basis, z_basis], grid_dtype=np.float64)
+x_basis = de.Fourier('x', 256, interval=(0, Lx), dealias=3/2)
+y_basis = de.Fourier('y', 256, interval=(0, Ly), dealias=3/2)
+z_basis = de.Chebyshev('z', 64, interval=(0, Lz), dealias=3/2)
+domain = de.Domain([x_basis, y_basis, z_basis], grid_dtype=np.float64, mesh=None)
 
 # non-constant coefficients
 Vg = domain.new_field(name='Vg')
@@ -68,13 +71,15 @@ problem.parameters['kap'] = kapp
 problem.parameters['nu'] = nu
 problem.parameters['Ms'] = M2
 problem.parameters['Vg'] = Vg
+problem.parameters['kapf'] = kapf
 
+problem.substitutions['D(A)'] = '-kapf*(dx(dx(dx(dx(A)))) + 2*dx(dx(dy(dy(A)))) + dy(dy(dy(dy(A)))))'
 #problem.add_equation("p = 0" , condition="(nx==0) and (ny==0)")
 problem.add_equation("dx(u) + dy(v) + wz = 0")
-problem.add_equation("dt(b) - kap*(dx(dx(b)) + dy(dy(b)) + dz(bz))  = - u*(dx(b)+Ms) - v*dy(b) - w*bz - Vg*dy(b) ")
-problem.add_equation("dt(u) - f*v + dx(p)  - nu*(dx(dx(u)) + dy(dy(v)) + dz(uz))   = - u*dx(u) - v*dy(u) - w*uz - Vg*dy(u)")
-problem.add_equation("dt(v) + f*u + dy(p)  - nu*(dx(dx(v)) + dy(dy(v)) + dz(vz))  = - u*dx(v) - v*dy(v) - w*(vz+ Ms/f)  - Vg*dy(v)")
-problem.add_equation("dt(w) + dz(p) - b -nu*(dx(dx(w)) + dy(dy(w))+ dz(wz)) = -u*dx(w) - v*dy(w)- w*wz - Vg*dy(w)")
+problem.add_equation("dt(b) - kap*( dz(bz)) - D(b) = - u*(dx(b)+Ms) - v*dy(b) - w*bz - Vg*dy(b) ")
+problem.add_equation("dt(u) - f*v + dx(p)  - nu*(dz(uz)) - D(u)   = - u*dx(u) - v*dy(u) - w*uz - Vg*dy(u)")
+problem.add_equation("dt(v) + f*u + dy(p)  - nu*( dz(vz)) -D(v) = - u*dx(v) - v*dy(v) - w*(vz+ Ms/f)  - Vg*dy(v)")
+problem.add_equation("dt(w) + dz(p) - b -nu*(dz(wz)) -D(w) = -u*dx(w) - v*dy(w)- w*wz - Vg*dy(w)")
 problem.add_equation("bz - dz(b) = 0")
 problem.add_equation("uz - dz(u) = 0")
 problem.add_equation("vz - dz(v) = 0")
@@ -113,24 +118,22 @@ b['g'] = N2*z + pert
 b.differentiate('z', out=bz)
 #%%
 # Integration parameters
-solver.stop_sim_time = 3600*24*10
-solver.stop_wall_time = 60 * 60.
+solver.stop_sim_time = 3600*24*90
+solver.stop_wall_time = np.inf
 solver.stop_iteration = np.inf
 
 # Analysis
-snap = solver.evaluator.add_file_handler('snapshots', sim_dt=3600, max_writes=24)
-snap.add_task("interp(p, y=16)", scales=1, name='p midplane')
-snap.add_task("interp(b, y=16)", scales=1, name='b midplane')
-snap.add_task("interp(u, y=16)", scales=1, name='u midplane')
-snap.add_task("interp(v, y=16)", scales=1, name='v midplane')
-snap.add_task("interp(w, y=16)", scales=1, name='w midplane')
+snap = solver.evaluator.add_file_handler('snapshots1F', sim_dt=3600*4, max_writes=24*1000)
+snap.add_task("interp(b, y=32)", scales=1, name='b midplane')
+snap.add_task("interp(u, z=100)", scales=1, name='u surface')
+snap.add_task("interp(v, y=100)", scales=1, name='v surface')
 snap.add_task("interp(b, z=100)", scales=1, name='b surface')
 
 #snap.add_task("integ(b, 'z')", name='b integral x4', scales=4)
 
 # CFL
 CFL = flow_tools.CFL(solver, initial_dt=1e-4, cadence=1, safety=1.5,
-                     max_change=1.5, min_change=0, max_dt=30)
+                     max_change=1.5, min_change=0, max_dt=7200)
 CFL.add_velocities(('u', 'v', 'w'))
 
 # Flow properties
@@ -147,10 +150,10 @@ try:
         dt = CFL.compute_dt()
         solver.step(dt)
         if (solver.iteration-1) % 100 == 0:
-            logger.info('Iteration: %i, Time: %e, dt: %e' %(solver.iteration, solver.sim_time, dt))
+            logger.info('Iteration: %i, Days: %1.1f, dt: %e' %(solver.iteration, solver.sim_time/86400, dt))
 #            logger.info('Max Re = %f' %flow.max('Re'))
             utemp = solver.state['u']
-            logger.info('U Val: %f' %(utemp['g'][1, 1, 1]))
+            logger.info('U Val: %f' %(utemp['g'][0, 0, 0]))
 except:
     logger.error('Exception raised, triggering end of main loop.')
     raise
