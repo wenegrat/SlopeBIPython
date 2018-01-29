@@ -75,7 +75,7 @@ tpoint = np.floor( next((x[0] for x in enumerate(z) if x[1]>BLH)))
 tpoint = int(tpoint)
 Bz['g'][0:tpoint] = Bzbl    
 Vz['g'][0:tpoint] = Shmag
-Bt[1:nz] = integrate.cumtrapz(Bz['g']+N**2, z)
+Bt[1:nz] = integrate.cumtrapz(Bz['g'], z)
 B['g'] = Bt
 
 V['g'][1:nz] = integrate.cumtrapz(Vz['g'], z)
@@ -172,7 +172,7 @@ y_basis = de.Fourier('y', ny, interval=(0, Ly), dealias=3/2)
 z_basis = de.Chebyshev('z', nz, interval=(0, Lz), dealias=3/2)
 domain = de.Domain([x_basis, y_basis, z_basis], grid_dtype=np.float64, mesh=None)
 z = domain.grid(2)
-
+x = domain.grid(0)
 # set up IVP
 problem = de.IVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz', 'bz'])
 problem.meta[:]['z']['dirichlet'] = True
@@ -237,10 +237,11 @@ bz = solver.state['bz']
 uz = solver.state['uz']
 vz = solver.state['vz']
 
+#%%
 # define initial condtions
 b['g']= B['g']
-u['g']= U
-v['g']= V
+u['g']= U['g']
+v['g']= V['g']
 
 # Random perturbations, initialized globally for same results in parallel
 gshape = domain.dist.grid_layout.global_shape(scales=1)
