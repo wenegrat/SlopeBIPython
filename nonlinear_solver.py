@@ -185,8 +185,8 @@ VI = domain.new_field(name='VI')
 BI = domain.new_field(name='BI')
 slices = domain.dist.grid_layout.slices(scales=1)
 z_slice = slices[2]
-VI['g'] = np.tile(V['g'], (nx, ny, 1))
-BI['g'] = np.tile(B['g'], (nx, ny, 1))
+VI['g'] = V['g']
+BI['g'] = B['g']
 
 # define constants
 problem.parameters['N'] = N
@@ -213,10 +213,10 @@ problem.substitutions['avg(A)'] = "integ(A, 'x', 'y', 'z')/L**2"
 problem.substitutions['vint(A)'] = "integ(A, 'z')"
 
 # define equations
-problem.add_equation('dt(u) - f*v*cos(tht) + dx(p) - b*sin(tht) - D(u,uz) - HV(u) + VI*dy(u) = -NL(u,uz)')
-problem.add_equation('dt(v) + f*u*cos(tht) + dy(p) - D(v,vz) - HV(v) +VI*dy(v)+w*dz(VI) = -NL(v,vz)')
+problem.add_equation('dt(u) - f*v*cos(tht) + dx(p) - b*sin(tht) - D(u,uz) - HV(u)  = -NL(u,uz) - VI*dy(u)')
+problem.add_equation('dt(v) + f*u*cos(tht) + dy(p) - D(v,vz) - HV(v)  = -NL(v,vz) - VI*dy(v) - w*dz(VI)')
 problem.add_equation('dz(p) - b*cos(tht) = 0')
-problem.add_equation('dt(b) + u*N**2*sin(tht) + 0*w*N**2*cos(tht) - D(b,bz) - HV(b)+ VI*dy(b)+w*dz(BI) = -NL(b,bz) + dz(kap)*N**2*cos(tht)')
+problem.add_equation('dt(b) + u*N**2*sin(tht) + 0*w*N**2*cos(tht) - D(b,bz) - HV(b) = -NL(b,bz) - VI*dy(b) - w*dz(BI) + dz(kap)*N**2*cos(tht)')
 
 problem.add_equation('dx(u) + dy(v) + wz = 0')
 
