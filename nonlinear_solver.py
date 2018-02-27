@@ -34,7 +34,7 @@ ly_global = np.logspace(-5, -3, 192)*2*np.pi
 OD = False
 
 nx = 64
-ny = 64
+ny = 256
 Lx, Ly, Lz = (nx*1e3/2,ny*1e3/2, 1000.)
 f = 1e-4 # Coriolis parameter
 #N2 = (12*f)**2
@@ -230,7 +230,7 @@ problem.substitutions['HV(A)'] = '-A4*(dx(dx(dx(dx(A)))) + 2*dx(dx(dy(dy(A)))) +
 # substitutions for diagnostics
 problem.substitutions['zf'] = 'x*sin(tht) + z*cos(tht)'
 problem.substitutions['havg(A)'] = "integ(A, 'x', 'y')/L**2"
-problem.substitutions['prime(A)'] = "A - integ(A,'y')/L"
+problem.substitutions['prime(A)'] = "A - havg(A)"
 problem.substitutions['EKE']  = '(prime(u)**2 + prime(v)**2)/2'
 problem.substitutions['avg(A)'] = "integ(A, 'x', 'y', 'z')/L**2"
 problem.substitutions['vint(A)'] = "integ(A, 'z')"
@@ -311,6 +311,7 @@ snap.add_task("-avg(zf*b)", name='pe')
 snap.add_task("avg(u**2 + v**2)/2", name='ke')
 snap.add_task("vint(havg(u)**2 + havg(v)**2)/2", name='mke')
 snap.add_task('avg(EKE)', name='eke')
+
 # buoyancy fields
 snap.add_task("interp(b, z=0)", scales=1, name='b surface')
 snap.add_task("interp(b, z=10)", scales=1, name='b 10')
@@ -328,14 +329,18 @@ snap.add_task('BZI', scales=1, name='Bz')
 
 # KE budget
 snap.add_task("avg(prime(u)*prime(b)*sin(tht) + prime(w)*prime(b)*cos(tht))", name='byncy prdctn')
-snap.add_task("avg(prime(u)*prime(D(u,uz)) + prime(v)*prime(D(v,vz)))", name='dssptn')
 snap.add_task("vint(havg(u)*havg(b)*sin(tht))", name='mean byncy prdctn')
 snap.add_task("-vint(kap*(havg(uz)**2 + havg(vz)**2))", name='mean dssptn')
 #snap.add_task("vint(havg(uz)*havg(u*w) + havg(vz)*havg(v*w))", name='shear prod')
-snap.add_task("avg(prime(u)*prime(HV(u)) +prime(v)*prime(HV(v)))", name='hypv')
 
 snap.add_task("havg(prime(w)*prime(b)*cos(tht) + prime(u)*prime(b)*sin(tht))", name='wpbp')
-snap.add_task("-avg(prime(v)*prime(w)*(vz))", name='shear prod')
+snap.add_task("-havg(prime(v)*prime(w)*havg(vz))", name='shear prod')
+snap.add_task("-havg(prime(v)*prime(w)*dz(VI))", name='mf shear prod')
+snap.add_task("-havg(prime(u)*prime(u)*dx(u) +prime(u)*prime(v)*dy(v) + prime(v)*prime(v)*dy(v) + prime(v)*prime(v)*dx(u))", name='lat shear prod')
+snap.add_task("-havg(prime(u)*u*dx(u) +prime(u)*(v+VI+VIb)*dy(v) + prime(v)*(v+VI+VIb)*dy(v) + prime(v)*(v+VI+VIb)*dx(u))", name='lat shear prod 2')
+snap.add_task("havg(prime(u)*prime(D(u,uz)) + prime(v)*prime(D(v,vz)))", name='dssptn')
+snap.add_task("havg(prime(v)*D(VI, dz(VI)))", name='mf dssptn')
+snap.add_task("havg(prime(u)*HV(u) +prime(v)*HV(v))", name='hypv')
 
 #snap.add_task("integ(b, 'z')", name='b integral x4', scales=4)
 
