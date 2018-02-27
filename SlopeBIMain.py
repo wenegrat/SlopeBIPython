@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Oct 26 15:06:43 2017
-Main Script Compiled to Keep Track of Different Functions
-
-Analysis and Figures for:
-    Submesoscale Baroclinic Instability in the Bottom Boundary Layer
     Wenegrat, Callies, Thomas (submitted 12/17)
 @author: jacob
 """
@@ -52,7 +47,12 @@ RegimeDiagram.py # Make the regime diagram
 
 ## OLD STUFF NOT IN USE
 MixingStability.py # Calculates 1D mixing-problem, then checks stability characteristics.
-EkmanSolver.py # Version of Ekman solver written using Dedalus, doesn't work for time varying kappa
+EkmanSolv
+Created on Thu Oct 26 15:06:43 2017
+Main Script Compiled to Keep Track of Different Functions
+
+Analysis and Figures for:
+    Submesoscale Baroclinic Instability in the Bottom Boundary Layerer.py # Version of Ekman solver written using Dedalus, doesn't work for time varying kappa
 nonlinear_solver.py # 3D NS Solver, doesn't work very well.
 bci.py # 3D NS Solver from Joern. Works ok until blow-up...
 EkmanSolverForward.py # Integrates the 1D BBL Ekman problem forward in time, saves figs and files

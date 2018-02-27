@@ -33,8 +33,8 @@ directoryname = '/data/thomas/jacob13/STABILITY/NLSIM/'
 ly_global = np.logspace(-5, -2, 192)
 OD = False
 
-nx = 128
-ny = 128
+nx =32
+ny = 32
 Lx, Ly, Lz = (nx/2*1e3,ny/2*1e3, 500.)
 f = 1e-4 # Coriolis parameter
 #N2 = (12*f)**2
@@ -238,7 +238,7 @@ problem.add_bc('left(p) = 0', condition='(nx == 0) and (ny == 0)')
 problem.add_bc('right(bz) = 0')
 
 # Build solver
-solver = problem.build_solver(de.timesteppers.RK443)
+solver = problem.build_solver(de.timesteppers.MCNAB2)
 logger.info('Solver built')
 
 # Initial conditions

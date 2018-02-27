@@ -160,7 +160,7 @@ bma = 0.0045
 bma = 0.0005*1e3
 #bma = -0.005*1e3
 bm = 0.003*1e3 # FOR UPWELLING
-#bm = 0.002*1e3 # FOR DOWNWELLING
+bm = 0.002*1e3 # FOR DOWNWELLING
 bc = np.linspace(-bm, -bma, nc)
 kc = np.linspace(-5, -2, 10)
 rc = np.linspace(0, 2, 20)
@@ -409,10 +409,14 @@ cm = 0.25
 cl = np.linspace(.0, cm, 41)
 #grf[np.logical_not(np.isfinite(grf))] = 0
 plt.figure(figsize=(10, 8))
-plt.contourf(a['ll']/(2*np.pi), time*a['f']/(2*np.pi), grfi/a['f'], cl, vmin=-cm, vmax=cm, cmap='RdGy_r')
+a1=plt.contourf(a['ll']/(2*np.pi), time*a['f']/(2*np.pi), grfi/a['f'], cl, vmin=-cm, vmax=cm, cmap='RdGy_r')
+for c in a1.collections:
+    c.set_edgecolor("face")
 cb = plt.colorbar()
 cb.set_ticks(np.linspace(cl[0], cl[-1], 6))
-cb.set_label('$\\omega_i$', fontsize = 26)
+#cb.set_label('$\\omega_i$', fontsize = 26)
+cb.set_label('$\\omega_i/f$', fontsize = 26)
+
 plt.ylim((0, 30))
 CS = plt.contour(a['ll']/(2*np.pi), time*a['f']/(2*np.pi), grfi/a['f'],
             [0.025, 0.1, 0.15, 0.2],colors='0.5')
@@ -420,7 +424,7 @@ plt.xlim((0, 0.00150))
 #plt.tick_params(axis='both', which='major', labelsize=fs)
 #mlocs = [(.003, 8), (.005, 10), (.003, 22),(0.007, 6)]
 mlocs = np.array([(.0008, 5), (0.0006, 8), (0.0007, 9),(0.0004, 20)])
-mlocs = [(0.001/(2*np.pi), 10)] # For Upwelling case
+#mlocs = [(0.001/(2*np.pi), 10)] # For Upwelling case
 plt.clabel(CS, inline=1, fontsize = 10, fmt='%1.3f', manual = mlocs)
 plt.xlabel('Along slope wavenumber, $l$ $[m^{-1}]$', fontsize = 24)
 plt.ylabel('Time, ${tf}/{2\\pi}$', fontsize = 24)
@@ -428,6 +432,7 @@ plt.grid(linestyle='--', alpha = 0.5)
 
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/EkmanStabilityDOWN.eps', format='eps', dpi=1000)
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/EkmanStabilityUP.eps', format='eps', dpi=1000)
+#plt.savefig('/home/jacob/Dropbox/Presentations/OS 2018 Slope Presentation/Working Files/Figures/EkmanStabilityDOWN.pdf', dpi=1000)
 
 ##%%
 #ind = next(x[0] for x in enumerate(time*a['f']/(2*np.pi)) if x[1] > 10) -1
@@ -565,3 +570,105 @@ plt.grid(linestyle='--', alpha = 0.5)
 ##plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/EkmanPerturbationsCombo.pdf', format='pdf', bbox_inches='tight')
 ##fig.subplots_adjust(wspace=10, vspace=0.1)
 #plt.show()
+
+##%% PRESENTATION PLOT WITH RI
+#plt.rcParams.update({'font.size': 20})
+#plt.rcParams['contour.negative_linestyle'] = 'solid'
+#cm = 'seismic'
+##cm = 'binary'
+#z = a['z'] 
+#um = 0.025
+#nc = 24#30
+#lw = 0.5
+##nc = 20
+#uc = np.linspace(-um, um,nc)
+#vm = 0.11
+#vc = np.linspace(-vm, vm, nc)
+#bm = 0.0065 
+##bm = 0.0075
+#bma = 0.0045 
+#
+#bma = 0.0005*1e3
+##bma = -0.005*1e3
+#bm = 0.003*1e3 # FOR UPWELLING
+#bm = 0.002*1e3 # FOR DOWNWELLING
+#bc = np.linspace(-bm, -bma, nc)
+#kc = np.linspace(-5, -2, 10)
+#rc = np.linspace(0, 2, 20)
+##rc = np.linspace(0, 8, 10)
+#fig, ax = plt.subplots( 5, 1, sharex=True, figsize=(10, 10))
+#
+## U PLOT
+#UM = ax[0].contourf(time*a['f']/(2*np.pi), z, np.transpose(Us),uc, vmin=-um, vmax=um, cmap=cm, extend='both' )
+#cb = fig.colorbar(UM, ax=ax[0])
+#cb.set_ticks(np.linspace(uc[0], uc[-1], 3))
+#cb.set_label('$m s^{-1}$')
+#ax[0].contour(time*a['f']/(2*np.pi), z, np.transpose(Us),levels=uc, colors='0.5', linewidths=lw)
+#
+## V PLOT
+#VM = ax[1].contourf(time*a['f']/(2*np.pi), z, np.transpose(Vs),vc, vmin=-vm, vmax=vm, cmap=cm, extend='both' )
+#VM.set_clim(-0.1, 0.1)
+#cb = fig.colorbar(VM, ax=ax[1])
+#cb.set_ticks(np.linspace(-.1,.1, 3))
+#cb.set_label('$m s^{-1}$', labelpad=25)
+#ax[1].contour(time*a['f']/(2*np.pi), z, np.transpose(Vs),levels=vc, colors='0.5', linewidths=lw)
+#
+#def fmt(x, pos):
+#    a, b = '{:.2e}'.format(x).split('e')
+#    b = int(b)
+#    return r'${} \times 10^{{{}}}$'.format(a, b)
+#
+## B PLOT
+#BM = ax[2].contourf(time*a['f']/(2*np.pi), z, np.transpose(Bs*1e3), bc, vmin=-bm, bmax=-bma, cmap=cm )
+#cb = fig.colorbar(BM, ax=ax[2])
+#cb.set_ticks(np.linspace(bc[0], bc[-1], 3))
+#cb.set_label('$\\times 10^{-3}$  $m s^{-2}$', labelpad=16)
+#
+#ax[2].contour(time*a['f']/(2*np.pi), z, np.transpose(Bs*1e3),levels=bc, colors='0.5', linewidths=lw)
+#
+## KAPPA PLOT
+#KM = ax[3].contourf(time*a['f']/(2*np.pi), z, np.log10(np.transpose(Kappas)), kc, vmin=kc[0], vmax=kc[-1], cmap=cm)
+#cb = fig.colorbar(KM, ax=ax[3])
+#cb.set_ticks(np.linspace(kc[0], kc[-1], 3))
+#cb.set_label('$log_{10}(m^2 s^{-1})$', labelpad=28)
+#ax[3].contour(time*a['f']/(2*np.pi), z, np.log10(np.transpose(Kappas)),levels=kc, colors='0.5', linewidths=lw)
+#
+## Ri Plot
+#NM = ax[4].contourf(time*a['f']/(2*np.pi), z[0:-1], (np.transpose(Ri**(1))), rc, vmin=rc[0], vmax=rc[-1], extend='both', cmap=cm)
+#cb = fig.colorbar(NM, ax=ax[4])
+#cti  = np.linspace(rc[0], rc[-1], 3)
+#cb.set_ticks(cti)
+#cb.set_ticklabels(['$<$'+str(cti[0]), str(cti[1]), '$>$'+str(cti[2])])
+##cb.set_label('$log_{10}(m^2 s^{-1})$')
+#ax[4].contour(time*a['f']/(2*np.pi), z[0:-1], (np.transpose(Ri**(1))),levels=rc, colors='0.5', linewidths=lw)
+#
+#maxh = 100
+#ax[0].set_ylim((0, maxh))
+#ax[1].set_ylim((0, maxh))
+#ax[2].set_ylim((0, maxh))
+#ax[3].set_ylim((0, maxh))
+#ax[4].set_ylim((0, maxh))
+#maxt = 30
+#ax[0].set_xlim((0, maxt))
+#ax[1].set_xlim((0, maxt))
+#ax[2].set_xlim((0, maxt))
+#ax[3].set_xlim((0, maxt))
+#ax[4].set_xlim((0, maxt))
+#ax[0].set_ylabel('$z (m)$', fontsize=26)
+#ax[1].set_ylabel('$z (m)$', fontsize=26)
+#ax[2].set_ylabel('$z (m)$', fontsize=26)
+#ax[3].set_ylabel('$z (m)$', fontsize=26)
+#ax[4].set_ylabel('$z (m)$', fontsize=26)
+#ax[4].set_xlabel('${tf}/{2 \\pi}$', fontsize=28, labelpad=10)
+#
+#bb = dict(boxstyle='Square', fc='w')
+#
+#xp = 0.75
+#ax[0].text(xp, 75, 'Across-slope velocity, $U$', fontsize=20, bbox=bb)
+#ax[1].text(xp, 75, 'Along-slope velocity, $V$', fontsize=20, bbox=bb)
+#ax[2].text(xp, 75, 'Buoyancy', fontsize=20, bbox=bb)
+#ax[3].text(xp, 75, 'Diffusivity, $\\kappa$', fontsize=20, bbox=bb)
+#ax[4].text(xp, 75, 'Richardson Number', fontsize=20, bbox=bb)
+#
+##plt.savefig('/home/jacob/Dropbox/Presentations/OS 2018 Slope Presentation/Working Files/Figures/EkmanSpinDOWN.pdf', dpi=1000)
+##plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/EkmanSpinUP.eps', format='eps', dpi=1000)

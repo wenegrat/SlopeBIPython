@@ -201,3 +201,85 @@ ax[1].set_ylim((0, 1000))
 #ax[1,1].set_xlabel('phase')
 #ax[0,0].set_ylabel('slope-normal coordinate [m]')
 #ax[1,0].set_ylabel('slope-normal coordinate [m]')
+
+
+#%% PRESENTATION STUFF
+##%% MAKE IDEALIZED GROWTH RATE PLOT (FIG 3)
+#plt.rcParams['text.usetex'] = True
+#
+#def tickfun(X):
+#    Y = 1/X/1000
+#    return ['%i' % ceil(z) for z in Y]
+#
+#
+#fs = 26
+#plt.rc('xtick', labelsize=fs)
+#plt.rc('ytick', labelsize=fs)
+#
+#fig = plt.figure(figsize=(12,5))
+#ax1 = fig.add_subplot(111)
+#ax2 = ax1.twiny()
+#for i in range(0, thetas.shape[0]):
+#    ax1.semilogx(a['ll']/(2*np.pi), grn[i,:], label='$\\theta = $ ' + str(thetas[i]), linewidth=2)
+#    ax1.set_xlabel('Along-slope wavenumber [m$^{-1}$]', fontsize = fs)
+#    ax1.set_ylabel('Growth rate ($\omega/f$)', fontsize=fs)
+#    ax1.set_ylim((0, .25))
+#    ax1.set_xlim((1e-4, 1e-2))
+#    ax1.set_xlim((2e-5, 1.5e-3))
+#    plt.grid(linestyle='--', alpha = 0.5)
+#
+#
+#ax1.legend(fontsize=fs)
+#ax1.grid(linestyle='--', alpha = 0.5, which='Both')
+#
+#newticks = np.array([2*np.pi/50e3, 2*np.pi/10e3, 2*np.pi/1e3])
+#newticks = np.array([1/50e3, 1/10e3, 1e-3])
+#ax2.set_xscale('log')
+#
+#ax2.set_xticks(newticks)
+#ax2.set_xlim(ax1.get_xlim())
+#
+#ax2.set_xticklabels(tickfun(newticks))
+#ax2.set_xlabel('Wavelength [km]', labelpad=5, fontsize=fs)
+#ax2.grid(False)
+#z = a['z']    
+#
+##plt.savefig('/home/jacob/Dropbox/Presentations/OS 2018 Slope Presentation/Working Files/Figures/IdealizedGrowthRates.pdf', dpi=1000, bbox_inches='tight')
+#
+##%%
+##%% 
+## Make Background State Plot (FIG 2)
+#fs = 28
+#plt.rcParams.update({'font.size': 12})
+#
+#V = np.array([a['V']])
+#B = np.array([a['B']])
+#Vz = np.gradient(V[-1,:], np.gradient(z))
+#Bz = np.gradient(B[-1,:], np.gradient(z))
+#Ri = Bz/(Vz**2)
+#fig, ax = plt.subplots(1,2, sharey=True, figsize=(6,6))
+#
+#ax[0].plot(a['V'], z)
+#ax[0].set_xticks([-0., 5e-2, 0.1])
+#ax[0].set_xlim((-0.01, .11))
+#ax[0].set_xlabel('V ($ms^{-1}$)', fontsize=fs, color='b')
+#ax2 = ax[0].twiny()
+#ax2.plot(a['B'], z, color='g')
+#ax2.set_xticks([0, 5e-4, 0.001])
+#ax2.set_xlim((0-1e-4, 0.0011))
+#for tl in ax2.get_xticklabels():
+#    tl.set_color('g')
+#for tl in ax[0].get_xticklabels():
+#    tl.set_color('b')
+#
+#ax[0].set_ylabel('Height Above Bottom [m]', fontsize=fs)
+#ax2.grid(linestyle='--', alpha=0.5)
+#ax[0].grid(linestyle='--', alpha=0.5)
+#ax2.set_xlabel('B ($m s^{-2}$)', fontsize=fs, color='g', labelpad=10)
+#ax[1].semilogx(Ri, z)
+#ax[1].set_xticks([1, 1e1, 1e2])
+#ax[1].set_xlabel('Ri', fontsize=fs)
+#ax[1].grid(linestyle='--', alpha = 0.5)
+#ax[1].set_ylim((0, 1000))
+#ax2.tick_params(labelsize=20)
+#plt.savefig('/home/jacob/Dropbox/Presentations/OS 2018 Slope Presentation/Working Files/Figures/RiStructure.pdf', dpi=1000, bbox_inches='tight')
