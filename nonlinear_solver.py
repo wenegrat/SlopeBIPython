@@ -29,31 +29,37 @@ logger = logging.getLogger(__name__)
 
 
 # Parameters
-directoryname = '/data/thomas/jacob13/STABILITY/NLSIM/'
-ly_global = np.logspace(-5, -2, 192)
+directoryname = '/scratch/jacob13/NLSIM/'
+ly_global = np.logspace(-5, -3, 192)*2*np.pi
 OD = False
 
-nx =32
-ny = 32
-Lx, Ly, Lz = (nx/2*1e3,ny/2*1e3, 500.)
+
+nx = 64
+ny = 64
+Lx, Ly, Lz = (nx*1e3/2,ny*1e3/2, 1000.)
+
 f = 1e-4 # Coriolis parameter
 #N2 = (12*f)**2
-N = (5e-3)
+#N = (3.4e-3)
 tht = 0.01 # slope angle
-kap4 = 1e5
+kap4 = 2e5
 nu = 1e-5
 kap = nu # Unit Pr
 
 BLH = 100
 VINT = 0.1
 Shmag = VINT/BLH
+Ri = 1.5
+N = np.sqrt(Ri*Shmag**2+f*Shmag/np.sin(tht))
 
-
-nz = 64
+nz = 128
 
 #%% 1D STABILITY
-z_basis = de.Chebyshev('z', nz, interval=(0,Lz))
-domain = de.Domain([z_basis], grid_dtype=np.float64, comm=MPI.COMM_SELF)
+z_basis = de.Chebyshev('z', nz, interval=(0,Lz), dealias=3/2)
+if OD:
+    domain = de.Domain([z_basis], grid_dtype=np.complex128, comm=MPI.COMM_SELF)
+else:
+    domain = de.Domain([z_basis], grid_dtype=np.float64, comm=MPI.COMM_SELF)
 z1 = domain.grid(0)
 
 # Define Stability Analysis Parameters
@@ -75,22 +81,24 @@ zind = np.floor( next((x[0] for x in enumerate(z1) if x[1]>BLH)))
 tpoint = np.floor( next((x[0] for x in enumerate(z1) if x[1]>BLH)))
 tpoint = int(tpoint)
 Bz['g'][0:tpoint] = Bzbl
-Bz['g'][0] = - N**2*np.cos(tht)    
+Bz['g'][0] = -N**2*np.cos(tht)    
 Vz['g'][0:tpoint] = Shmag
 Bt[1:nz] = integrate.cumtrapz(Bz['g'], z1)
 B['g'] = Bt
 
 V['g'][1:nz] = integrate.cumtrapz(Vz['g'], z1)
 V['g'][0] = 0
+V['g'] = V['g']-VINT
 
-problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz',
+problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz',
             'bz'], eigenvalue='omg', tolerance = 1e-10)
 problem.parameters['tht'] = tht
 problem.parameters['U'] = U
-problem.parameters['V'] = V
+problem.parameters['VI'] = V
+problem.parameters['VIb'] = VINT
 problem.parameters['Uz'] = Uz
 problem.parameters['Vz'] = Vz
-problem.parameters['Bz'] = Bz # This is a perturbation (Bztotal = Bz + N**2)
+problem.parameters['BZI'] = Bz # This is a perturbation (Bztotal = Bz + N**2)
 problem.parameters['N'] = N
 problem.parameters['f'] = f
 problem.parameters['kap'] = kap
@@ -98,22 +106,36 @@ problem.parameters['nu'] = nu
 problem.parameters['A4'] = kap4
 problem.parameters['k'] = 0. # will be set in loop
 problem.parameters['l'] = 0. # will be set in loop
+
+# SUBSTITIONS
 problem.substitutions['dx(A)'] = "1j*k*A"
 problem.substitutions['dy(A)'] = "1j*l*A"
 problem.substitutions['HV(A)'] = '-A4*(dx(dx(dx(dx(A)))) + 2*dx(dx(dy(dy(A)))) + dy(dy(dy(dy(A)))))' #Horizontal biharmonic diff
 problem.substitutions['dt(A)'] = "-1j*omg*A"
-problem.add_equation(('dt(u) + U*dx(u) + V*dy(u) + w*Uz - f*v*cos(tht) + dx(p)'
-        '- b*sin(tht) - (dz(nu)*uz+ nu*dz(uz)) -HV(u)= 0'))
-problem.add_equation(('dt(v) + U*dx(v) + V*dy(v) + w*Vz + f*u*cos(tht)'
-        '- f*w*sin(tht) + dy(p) - (dz(nu)*vz + nu*dz(vz)) -HV(v)= 0'))
-problem.add_equation(('(dt(w) + U*dx(w) + V*dy(w)) + f*v*sin(tht) + dz(p)'
-        '- b*cos(tht) - (dz(nu)*wz + nu*dz(wz)) - HV(w) = 0'))
-problem.add_equation(('dt(b) + U*dx(b) + V*dy(b) + u*N**2*sin(tht)'
-            '+ w*(Bz+N**2*cos(tht)) - dz(kap)*bz - kap*dz(bz) -HV(b)= 0'))
-problem.add_equation('dx(u) + dy(v) + wz = 0')
+problem.substitutions['D(A,Az)'] = 'kap*dz(Az) + dz(kap)*Az' # Vertical diffusion operator
+
+#problem.add_equation(('dt(u) + V*dy(u)  - f*v*cos(tht) + dx(p)'
+#        '- b*sin(tht) - (dz(nu)*uz+ nu*dz(uz)) - HV(u)= 0'))
+#problem.add_equation(('dt(v)  + V*dy(v) + w*Vz + f*u*cos(tht)'
+#        ' + dy(p) - (dz(nu)*vz + nu*dz(vz)) - HV(v)= 0'))
+#problem.add_equation(('(dt(w) + U*dx(w) + V*dy(w)) + f*v*sin(tht) + dz(p)'
+#        '- b*cos(tht) - (dz(nu)*wz + nu*dz(wz)) - HV(w) = 0'))
+#problem.add_equation((' dz(p)- b*cos(tht)= 0'))
+#problem.add_equation(('dt(b) +  V*dy(b) + u*N**2*sin(tht)'
+#            '+ w*(Bz+N**2*cos(tht)) - dz(kap)*bz - kap*dz(bz) -HV(b)= 0'))
+#problem.add_equation('dx(u) + dy(v) + dz(w) = 0')
+
+problem.add_equation('dt(u) - f*v*cos(tht) + dx(p) - b*sin(tht) - D(u,uz) - HV(u) + VIb*dy(u)  + VI*dy(u)=0')
+problem.add_equation('dt(v) + f*u*cos(tht) + dy(p) - D(v,vz) - HV(v)  + VIb*dy(v) +  VI*dy(v) + w*dz(VI) =0')
+problem.add_equation('dz(p) - b*cos(tht) = 0')
+problem.add_equation('dt(b) + u*N**2*sin(tht) + w*N**2*cos(tht) - D(b,bz) - HV(b) +VIb*dy(b)+ VI*dy(b) + w*BZI =0')
+problem.add_equation('dx(u) + dy(v) + dz(w) = 0')
+
+
+
 problem.add_equation('uz - dz(u) = 0')
 problem.add_equation('vz - dz(v) = 0')
-problem.add_equation('wz - dz(w) = 0')
+#problem.add_equation('wz - dz(w) = 0')
 problem.add_equation('bz - dz(b) = 0')
 problem.add_bc('left(u) = 0')
 problem.add_bc('left(v) = 0')
@@ -163,13 +185,13 @@ if OD:
     
     # Plot growth rates from root process
     if CW.rank == 0:
-        name = 'StabilityData_'+str(tht) # Can vary this depending on parameter of interest
+        name = 'StabilityData_'+str(Ri) # Can vary this depending on parameter of interest
         np.savez(directoryname+name + '.npz', nz=nz, tht=tht, z=z1, f=f, U=U['g'],
-        V=V['g'], B=B['g'], Bz=Bz['g'], Vz=Vz['g'], Lz = Lz, ll=ly_global,
+        V=V['g'], B=B['g'], Bz=Bz['g'], Vz=Vz['g'], Lz = Lz, ll=ly_global,N=N,
         gr=growth_global)
 
 #%% 3D PROBLEM
-# Create bases and domain
+# Create basis and domain
 start_init_time = time.time()
 x_basis = de.Fourier('x', nx, interval=(0, Lx), dealias=3/2)
 y_basis = de.Fourier('y', ny, interval=(0, Ly), dealias=3/2)
@@ -182,12 +204,14 @@ problem = de.IVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz', '
 problem.meta[:]['z']['dirichlet'] = True
 
 VI = domain.new_field(name='VI')
-BI = domain.new_field(name='BI')
+BZI = domain.new_field(name='BZI')
 slices = domain.dist.grid_layout.slices(scales=1)
 z_slice = slices[2]
+#box = np.ones(5)/5
+#VI['g'] = np.convolve(V['g']-VINT, box, mode='same')
+#BZI['g'] = np.convolve(Bz['g'], box, mode='same')
 VI['g'] = V['g']
-BI['g'] = B['g']
-
+BZI['g'] = Bz['g']
 # define constants
 problem.parameters['N'] = N
 problem.parameters['f'] = f
@@ -197,7 +221,8 @@ problem.parameters['L'] = Lx
 problem.parameters['H'] = Lz
 problem.parameters['A4'] = kap4
 problem.parameters['VI'] = VI
-problem.parameters['BI'] = BI
+problem.parameters['VIb'] = VINT
+problem.parameters['BZI'] = BZI
 
 # define substitutions
 problem.substitutions['D(A,Az)'] = 'kap*dz(Az) + dz(kap)*Az' # Vertical diffusion operator
@@ -207,16 +232,18 @@ problem.substitutions['HV(A)'] = '-A4*(dx(dx(dx(dx(A)))) + 2*dx(dx(dy(dy(A)))) +
 # substitutions for diagnostics
 problem.substitutions['zf'] = 'x*sin(tht) + z*cos(tht)'
 problem.substitutions['havg(A)'] = "integ(A, 'x', 'y')/L**2"
-problem.substitutions['prime(A)'] = "A - havg(A)"
+problem.substitutions['prime(A)'] = "A - integ(A,'y')/L"
 problem.substitutions['EKE']  = '(prime(u)**2 + prime(v)**2)/2'
 problem.substitutions['avg(A)'] = "integ(A, 'x', 'y', 'z')/L**2"
 problem.substitutions['vint(A)'] = "integ(A, 'z')"
 
 # define equations
-problem.add_equation('dt(u) - f*v*cos(tht) + dx(p) - b*sin(tht) - D(u,uz) - HV(u)  = -NL(u,uz) - VI*dy(u)')
-problem.add_equation('dt(v) + f*u*cos(tht) + dy(p) - D(v,vz) - HV(v)  = -NL(v,vz) - VI*dy(v) - w*dz(VI)')
+problem.add_equation('dt(u) - f*v*cos(tht) + dx(p) - b*sin(tht) - D(u,uz) - HV(u) + VIb*dy(u)  = -NL(u,uz) - VI*dy(u)')
+problem.add_equation('dt(v) + f*u*cos(tht) + dy(p) - D(v,vz) - HV(v)  + VIb*dy(v) = -NL(v,vz) - VI*dy(v) - w*dz(VI)+ D(VI,dz(VI))')
 problem.add_equation('dz(p) - b*cos(tht) = 0')
-problem.add_equation('dt(b) + u*N**2*sin(tht) + 0*w*N**2*cos(tht) - D(b,bz) - HV(b) = -NL(b,bz) - VI*dy(b) - w*dz(BI) + dz(kap)*N**2*cos(tht)')
+#problem.add_equation('dt(w) + dz(p) - b*cos(tht) -D(w, wz) - HV(w) = -NL(w, wz) - VI*dy(w)')
+
+problem.add_equation('dt(b) + u*N**2*sin(tht) + w*N**2*cos(tht) - D(b,bz) - HV(b) +VIb*dy(b) = -NL(b,bz) - VI*dy(b) - w*BZI +D(0, BZI+N**2*cos(tht))')
 
 problem.add_equation('dx(u) + dy(v) + wz = 0')
 
@@ -265,7 +292,7 @@ slices = domain.dist.grid_layout.slices(scales=1)
 rand = np.random.RandomState(seed=23)
 noise = rand.standard_normal(gshape)[slices]
 
-b['g'] += 1e-7*noise
+b['g'] += nx*1e-10*noise
 
 # Calculate Derivatives
 b.differentiate('z', out=bz)
@@ -274,12 +301,12 @@ v.differentiate('z', out=vz)
 
 #%%
 # Integration parameters
-solver.stop_sim_time = 3600*24*10
+solver.stop_sim_time = 3600*24*20
 solver.stop_wall_time = np.inf
 solver.stop_iteration = np.inf
 
 # Analysis
-snap = solver.evaluator.add_file_handler('snapshots', sim_dt=3600*4, max_writes=24*1000)
+snap = solver.evaluator.add_file_handler('snapshots', sim_dt=3600*6, max_writes=24*1000, parallel=False)
 
 # KE and PE
 snap.add_task("-avg(zf*b)", name='pe')
@@ -297,14 +324,20 @@ snap.add_task("interp(b, y=0)", scales=1, name='b plane')
 snap.add_task("u", scales=1, name='u')
 snap.add_task("v", scales=1, name='v')
 snap.add_task("w", scales=1, name='w')
+snap.add_task("b", scales=1, name='b')
+snap.add_task('VI', scales=1, name='V')
+snap.add_task('BZI', scales=1, name='Bz')
 
 # KE budget
-snap.add_task("avg(u*b*sin(tht) + w*b*cos(tht))", name='byncy prdctn')
-snap.add_task("avg(u*D(u,uz) + v*D(v,vz))", name='dssptn')
+snap.add_task("avg(prime(u)*prime(b)*sin(tht) + prime(w)*prime(b)*cos(tht))", name='byncy prdctn')
+snap.add_task("avg(prime(u)*prime(D(u,uz)) + prime(v)*prime(D(v,vz)))", name='dssptn')
 snap.add_task("vint(havg(u)*havg(b)*sin(tht))", name='mean byncy prdctn')
 snap.add_task("-vint(kap*(havg(uz)**2 + havg(vz)**2))", name='mean dssptn')
-snap.add_task("vint(havg(uz)*havg(u*w) + havg(vz)*havg(v*w))", name='shear prod')
-snap.add_task("avg(u*HV(u) + v*HV(v))", name='hypv')
+#snap.add_task("vint(havg(uz)*havg(u*w) + havg(vz)*havg(v*w))", name='shear prod')
+snap.add_task("avg(prime(u)*prime(HV(u)) +prime(v)*prime(HV(v)))", name='hypv')
+
+snap.add_task("havg(prime(w)*prime(b)*cos(tht) + prime(u)*prime(b)*sin(tht))", name='wpbp')
+snap.add_task("-avg(prime(v)*prime(w)*(vz))", name='shear prod')
 
 #snap.add_task("integ(b, 'z')", name='b integral x4', scales=4)
 
@@ -316,7 +349,8 @@ CFL.add_velocities(('u', 'v', 'w'))
 # Flow properties
 #flow = flow_tools.GlobalFlowProperty(solver, cadence=10)
 #flow.add_property("sqrt(u*u + v*v + w*w) / R", name='Re')
-
+#logger.info('Pausing 10 sec.')
+#time.sleep(30)
 # Main loop
 end_init_time = time.time()
 logger.info('Initialization time: %f' %(end_init_time-start_init_time))
@@ -333,6 +367,8 @@ try:
             if utemp['g'].size > 0:
                 um = np.max(np.abs(utemp['g']))
                 logger.info('U Val: %f' % um)
+                if np.isnan(um):
+                    raise Exception('NaN encountered.')
 except:
     logger.error('Exception raised, triggering end of main loop.')
     raise
