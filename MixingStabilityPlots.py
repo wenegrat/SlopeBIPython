@@ -154,10 +154,11 @@ ax2 = ax1.twiny()
 
 ax1.semilogx(ll/(2*np.pi), gr, linewidth=2)
 ax1.set_xlabel('Along-slope wavenumber [m$^{-1}$]', fontsize=fs)
-ax1.set_ylabel('Growth rate [$s^{-1}$]', fontsize=fs)
+ax1.set_ylabel('Growth rate [s$^{-1}$]', fontsize=fs)
 ax1.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
 ax1.grid(linestyle='--', alpha = 0.5, which='Both')
 ax1.set_xlim((3e-6, 1e-3))
+ax1.set_ylim((0, 2.25e-6))
 newticks = np.array([1/100e3, 1/10e3, 1/1e3])
 ax2.set_xscale('log')
 #
@@ -170,7 +171,7 @@ ax2.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
 
 plt.tight_layout()
 
-#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingStability.pdf')
+#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/MixingStability.pdf')
 
 
 ##%%

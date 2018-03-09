@@ -131,8 +131,8 @@ w = solver.state['w']
 b = solver.state['b']
 #%%
 # shear production
-VSP = -2*np.real(np.conj(w['g'])*v['g']*Vz['g'] + np.conj(v['g'])*u['g']*Vz['g']*np.sin(tht))
-Vx = Vz['g']*np.sin(tht)
+VSP = -2*np.real(np.conj(w['g'])*v['g']*Vz['g']*np.cos(tht) + np.conj(v['g'])*u['g']*Vz['g']*np.sin(tht))
+Vx = Vz['g']*np.sin(tht)/np.cos(tht)
 LSP = -2*np.real(-np.conj(w['g'])*v['g']*Vx*np.sin(tht) + np.conj(v['g'])*u['g']*Vx)
 
 # buoyancy production

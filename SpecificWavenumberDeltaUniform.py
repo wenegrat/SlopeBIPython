@@ -245,15 +245,19 @@ b = solver.state['b']
 
 #%%
 # shear production
+# Note that Vz and Uz are in rotated frame already from GOTM output.
+
+# NOT USING THESE VSP AND LSP ANYWAY....
 Vx = -Vz['g']*np.sin(tht)
 
-VSP = -2*np.real((np.conj(w['g'])*v['g']*Vz['g']*np.cos(tht) + np.conj(v['g'])*u['g']*np.sin(tht)*Vz['g']))/np.cos(tht)
-VSP = VSP - 2*np.real((np.conj(w['g'])*u['g']*Uz['g']*np.cos(tht) + np.conj(u['g'])*u['g']*np.sin(tht)*Uz['g']))
+VSP = -2*np.real((np.conj(w['g'])*v['g']*Vz['g']*np.cos(tht) + np.conj(v['g'])*u['g']*np.sin(tht)*Vz['g']))*np.cos(tht)
+VSP = VSP - 2*np.real((np.conj(w['g'])*u['g']*Uz['g']*np.cos(tht) + np.conj(u['g'])*u['g']*np.sin(tht)*Uz['g']))*np.cos(tht)
 
 Ux = -Uz['g']*np.sin(tht)
-LSP = -2*np.real(-np.conj(w['g'])*v['g']*Vx*np.sin(tht) + np.conj(v['g'])*u['g']*Vx)
-LSP = LSP - 2*np.real(-np.conj(w['g'])*u['g']*Ux*np.sin(tht) + np.conj(u['g'])*u['g']*Ux)
+LSP = -2*np.real(-np.conj(w['g'])*v['g']*Vx*np.sin(tht) + np.conj(v['g'])*u['g']*Vx*np.cos(tht))
+LSP = LSP - 2*np.real(-np.conj(w['g'])*u['g']*Ux*np.sin(tht) + np.conj(u['g'])*u['g']*Ux*np.sin(tht))
 
+# USING THIS SHEAR PROD
 SP = -2*np.real(np.conj(w['g'])*(u['g']*Uz['g']+v['g']*Vz['g']))
 
 # buoyancy production

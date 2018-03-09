@@ -25,7 +25,7 @@ plt.rcParams['font.family'] = 'STIXGeneral'
 # LOAD
 a = np.load('/home/jacob/dedalus/NLSIM/StabilityData_1.5.npz');
 z = a['z']
-U = a['U']
+#U = a['U']
 V = a['V']
 B = a['B']
 Bz = a['Bz']
@@ -58,7 +58,8 @@ ax1.set_ylim((0, .25))
 #ax1.set_xlim((1e-4, 1e-2))
 #ax1.set_xlim((2e-5, 1.5e-3))
 plt.grid(linestyle='--', alpha = 0.5)
-
+#ax1.axvline(x=1/(6.5e3))
+ax1.axvline(x=1/(5.5e3))
 
 ax1.legend(fontsize=fs)
 ax1.grid(linestyle='--', alpha = 0.5, which='Both')
@@ -78,7 +79,7 @@ z = a['z']
 #fig.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/NLSim_Gr_Ri1.5.pdf', bbox_inches='tight')
 
 #%% LOAD NL SIM SNAPS
-filename = '/home/jacob/dedalus/NLSIM/snapshots/snapshots_s1_long.h5'
+filename = '/home/jacob/dedalus/NLSIM/snapshots/snapshots_s1.h5'
 f = h5py.File(filename, 'r')
 
 # List all groups
@@ -101,7 +102,7 @@ w = f['tasks']['w']
 b = f['tasks']['b']
 ke = f['tasks']['ke']
 mke = f['tasks']['mke']
-bp = f['tasks']['mean byncy prdctn']
+#bp = f['tasks']['mean byncy prdctn']
 
 x = u.dims[1][0][:]
 y = u.dims[2][0][:]
@@ -111,20 +112,29 @@ time = u.dims[0][0][:]
 eke = f['tasks']['eke']*x[-1]*y[-1]
 
 wpbp = f['tasks']['wpbp']
-sp = f['tasks']['shear prod'] #slope normal pert shear
-msp = f['tasks']['mf shear prod'] #slope normal prod mean flow
-lsp = f['tasks']['lat shear prod 2'] # lat shear produc 
-hypv = f['tasks']['hypv'] # only applies to pert quants
-diss = f['tasks']['dssptn'] #slope normal diss of pert quants
-mfdiss = f['tasks']['mf dssptn'] # slope normal diss of background
+sp = f['tasks']['sp'] #slope normal pert shear
+diss = f['tasks']['vertical diss']
+hypv = f['tasks']['hyper diss']
+#tsp = f['tasks']['tot shear prod']
+#msp = f['tasks']['mf shear prod'] #slope normal prod mean flow
+#lsp = f['tasks']['lat shear prod 2'] # lat shear produc 
+#hypv = f['tasks']['hypv'] # only applies to pert quants
+#diss = f['tasks']['dssptn'] #slope normal diss of pert quants
+#fdiss = f['tasks']['f dssptn'] #slope normal diss of pert quants
+#
+#mfdiss = f['tasks']['mf dssptn'] # slope normal diss of background
 
 V = f['tasks']['V']
 Bz = f['tasks']['Bz']
 
+vtot = v[:,:,:,:] + V[:,:,:,:] + 0.1
+eked = 0.5*(np.mean(np.mean(u,axis=1), axis=1)**2 + np.mean(np.mean(v ,axis=1), axis=1)**2)
+eked =integrate.trapz(eked, x=z, axis=-1)*x[-1]*y[-1]
 
+#eketo = np.gradient(eke[:,0,0,0])/7200
+eket = np.gradient(eke[:,0,0,0])/np.gradient(time)
 
-eket = np.gradient(eke[:,0,0,0], 21600)
-
+#eket[1:] = (eke[1:,0,0,0] - eke[0:-1,0,0,0])/21600
 
 nr = gr.size
 gr[gr>a['f']] = 0
@@ -132,6 +142,21 @@ grt = np.float64(np.zeros((nr, time.size)))
 for i in range(0, nr):
     grt[i,:] = np.exp(2*gr[i]*time)
 stint1 = integrate.trapz(grt,x=a['ll'], axis=0)
+
+#%%
+#ubar = np.mean(np.mean(u, axis=1), axis=1)
+#dubar = np.gradient(ubar,  21600, axis=0)
+#vbar = np.mean(np.mean(v, axis=1), axis=1)
+#dvbar = np.gradient(vbar, 21600, axis=0)
+#uprime = 0*u[:,:,:,:]
+#vprime = 0*u[:,:,:,:]
+#nterm = 0*u[:,:,:,:]
+#for i in range(0, nx):
+#    for j in range(0, ny):
+#        uprime[:,i,j,:] = u[:,i,j,:] - ubar
+#        vprime[:,i,j,:] = v[:,i,j,:] - vbar
+#        nterm[:,i,j,:] = uprime[:,i,j,:]*dubar + vprime[:,i,j,:]*dvbar
+#    
 #%% Replicate to slope
 nt, nx, ny, nz = V.shape
 zhat = np.zeros((nx, nz))
@@ -166,6 +191,18 @@ for c in a0.collections:
 
 #fig.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/NLSim_Basic_Ri1.5.pdf', bbox_inches='tight')
 #fig.savefig('/home/jacob/Dropbox/Presentations/OS 2018 Slope Presentation/Working Files/Figures/NLSim_Basic.pdf', bbox_inches='tight')
+#%%
+plt.figure(figsize=(7,4))
+a0=plt.contourf(xhat, zhat, (V[0,:,1,:]+0.1), np.linspace(0, clm[1], 1*12+1), cmap=cmap)
+plt.contour(xhat, zhat, Bf, 25, colors='0.5')
+plt.colorbar(a0, label='Along-slope velocity, m/s')
+plt.ylim((0,500))
+plt.ylabel(r'$\hat{z}$ (m)')
+plt.xlabel(r'$\hat{x}$ (km)')
+
+for c in a0.collections:
+    c.set_edgecolor("face")
+#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/NLSim_Basic.pdf', bbox_inches='tight')
 
 
 #%% 3x Plan View Plots
@@ -186,9 +223,9 @@ fig, ax = plt.subplots(2, 4, sharey=False,sharex=False,figsize=(9*61/60, 6.0), g
 a0 = ax[0, 0].contourf(x/1000,  y/1000, np.transpose(b50[t0,:,:,0])+(3.4e-3)**2*np.sin(tht)*x,bcl, extend='both', cmap=cm)
 a1 = ax[0, 1].contourf(x/1000,  y/1000, np.transpose(b50[t1,:,:,0])+(3.4e-3)**2*np.sin(tht)*x,bcl, extend='both', cmap=cm)
 a2 = ax[0, 2].contourf(x/1000,  y/1000, np.transpose(b50[t2,:,:,0])+(3.4e-3)**2*np.sin(tht)*x,bcl, extend='both', cmap=cm)
-a3 = ax[1, 0].contourf(x/1000,  y/1000, np.transpose(w[t0,:,:,18])*86400, wcl, extend='both', cmap=cm2)
-a4 = ax[1, 1].contourf(x/1000,  y/1000, np.transpose(w[t1,:,:,18])*86400, wcl, extend='both', cmap=cm2)
-a5 = ax[1, 2].contourf(x/1000,  y/1000, np.transpose(w[t2,:,:,18])*86400,wcl, extend='both', cmap=cm2)
+a3 = ax[1, 0].contourf(x/1000,  y/1000, np.transpose(w[t0,:,:,36])*86400, wcl, extend='both', cmap=cm2)
+a4 = ax[1, 1].contourf(x/1000,  y/1000, np.transpose(w[t1,:,:,36])*86400, wcl, extend='both', cmap=cm2)
+a5 = ax[1, 2].contourf(x/1000,  y/1000, np.transpose(w[t2,:,:,36])*86400,wcl, extend='both', cmap=cm2)
 
 for c in a0.collections:
     c.set_edgecolor("face")
@@ -290,6 +327,7 @@ ax[1,2].xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(f))
 
 
 #fig.savefig('/home/jacob/Dropbox/Presentations/OS 2018 Slope Presentation/Working Files/Figures/NLSim.pdf', bbox_inches='tight')
+#fig.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/NLSim_Overview.pdf', bbox_inches='tight')
 
 #ax[1,1].set_xticklabels(np.ceil(np.linspace(x[0], x[-1], 3)/1000))
 ##%% Plan View Plots
@@ -397,24 +435,37 @@ ax[1,2].xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(f))
 
 #fig.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/NLSim.pdf', bbox_inches='tight')
 
-#%%
+#%% CALCULATE POWER SPECTRAL DENSITY AS FUNCTION OF WAVENUMBER
+
 tn = 12
 time_step = 500
 psf = np.zeros((nx,))
 grt = np.float64(np.zeros((nx, time.size)))
 pst = np.zeros((nz, nx))
 
+ubar = np.mean(np.mean(u, axis=1), axis=1)
+vbar = np.mean(np.mean(v, axis=1), axis=1)
+uprime = 0*u[:,:,:,:]
+vprime = 0*u[:,:,:,:]
+for i in range(0, nx):
+    for j in range(0, ny):
+        uprime[:,i,j,:] = u[:,i,j,:] - ubar
+        vprime[:,i,j,:] = v[:,i,j,:] - vbar
+
+#%%
 for i in range(0,nx):
     for j in range(0, nz):
-        datau = u[tn,i,:,j]
-        datau = datau-np.mean(datau)
-        datav = v[tn,i,:,j]
-        datav = datav-np.mean(datav)
-        datake = datau**2 + datav**2
-        datake = datake-np.mean(datake)
+#        datau = u[tn,i,:,j]
+        datau = uprime[tn, i , : , j]
+#        datau = datau-np.mean(datau)
+#        datav = v[tn,i,:,j]
+#        datav = datav-np.mean(datav)
+        datav = vprime[tn,i, :, j]
+        datake = (datau**2 + datav**2)/2
+#        datake = datake-np.mean(datake)
         psu = np.abs(np.fft.fft(datau))
         psv = np.abs(np.fft.fft(datav))
-        pst[j,:] = ((psu)**2 + psv**2)
+#        pst[j,:] = ((psu)**2 + psv**2)
         pst[j,:] = np.abs(np.fft.fft(datake))
     psf[:] += integrate.trapz(pst, x=z, axis=0)
         
@@ -432,6 +483,65 @@ for i in range(0, nx):
     
 stint = integrate.trapz(grt,x=freqs, axis=0)
 
+#%%
+grn = gr/a['f']
+psfn = psf
+plt.figure()
+plt.semilogx(freqs, psfn/np.max(psfn))
+plt.semilogx(freqs, gri/np.max(gri))
+##%%
+##stint = integrate.trapz(np.exp(2*gr[10:]), x=a['ll'][10:])
+#tn = 12
+#e1 = np.exp(np.max(gr)*2*time)/np.exp(np.max(gr)*2*time[tn])*eke[tn,0,0,0]
+#e2 = stint1/stint1[tn]*eke[tn,0,0,0]
+#e3 = stint/stint[tn]*eke[tn,0,0,0]
+##e3 = stint*60
+#fig, ax = plt.subplots(2,1,figsize = (8,8), sharex=True)
+##plt.figure(figsize=(5,4))
+#ax[0].semilogy(time/86400, eke[:,0,0,0], linewidth=3, label='EKE')
+##ax[0].semilogy(time/86400, eke1[:,0,0,0]/2)
+#
+##ax[0].semilogy(time/864001, e1)
+##ax[0].semilogy(time/86400, np.exp(np.max(gr)*1.65*time)*1e-11)
+#
+##ax[0].semilogy(time/86400, e2)
+#ax[0].semilogy(time/86400, e3, linestyle='dashed', linewidth=2, label='Linear theory')
+#ax[0].legend()
+#
+#wpbpi = integrate.trapz(wpbp[:,0,0,:], x=z, axis=-1)/z[-1]
+#spi = integrate.trapz(sp[:,0,0,:]+0*lsp[:,0,0,:]+msp[:,0,0,:], x=z, axis=-1)/z[-1]
+#dissi= integrate.trapz(diss[:,0,0,:]+hypv[:,0,0,:]+mfdiss[:,0,0,:], x=z, axis=-1)/z[-1]
+#sum = wpbpi + spi+dissi 
+#ax[1].plot(time/86400, eke[:,0,0,0], label='EKE', linewidth=3)
+#ax[1].plot(time[1:]/86400, integrate.cumtrapz(wpbpi, time), linewidth=2, label='VBP')
+#ax[1].plot(time[1:]/86400, integrate.cumtrapz(spi, time), linewidth=2, label='SP')
+#ax[1].plot(time[1:]/86400, integrate.cumtrapz(dissi, time), linewidth=2, label='DISS')
+#ax[1].plot(time[1:]/86400, integrate.cumtrapz(sum[:], time), label='SUM')
+#ax[1].set_yscale('symlog', linthreshy=1e-4)
+#ax[1].set_yticks([-1e0, -1e-4, 0, 1e-4, 1e-0])
+#ax[1].legend()
+##
+##ax[1].plot(time/86400, eket[:], label='eke')
+##ax[1].plot(time/86400, wpbpi)
+##ax[1].plot(time/86400, sp[:,0,0,0])
+##ax[1].plot(time/86400, diss[:,0,0,0])
+##ax[1].plot(time/86400, hypv[:,0,0,0])
+##ax[1].set_yscale('symlog', linthreshy=1e-12)
+#
+#
+#ax[0].grid()
+#ax[1].grid()
+#ax[1].set_xlabel('Days')
+#ax[0].set_title('Eddy kinetic energy')
+#ax[0].set_ylabel('m^2s^{-2}')
+#ax[0].set_ylim((1e-11, 1e1))
+#ax[0].set_xlim((0, 20))
+##ax[1].set_ylim((0,300))
+#ax[1].set_xlim((0,20))
+#
+#ax[1].set_title('Kinetic Energy Budget')
+#plt.tight_layout()
+
 
 #%%
 #stint = integrate.trapz(np.exp(2*gr[10:]), x=a['ll'][10:])
@@ -439,13 +549,16 @@ tn = 12
 e1 = np.exp(np.max(gr)*2*time)/np.exp(np.max(gr)*2*time[tn])*eke[tn,0,0,0]
 e2 = stint1/stint1[tn]*eke[tn,0,0,0]
 e3 = stint/stint[tn]*eke[tn,0,0,0]
+#e3 = stint
 #e3 = stint*60
 fig, ax = plt.subplots(2,1,figsize = (8,8), sharex=True)
 #plt.figure(figsize=(5,4))
 ax[0].semilogy(time/86400, eke[:,0,0,0], linewidth=3, label='EKE')
+#ax[0].semilogy(time/86400, eked[:], linewidth=3, label='EKE')
+
 #ax[0].semilogy(time/86400, eke1[:,0,0,0]/2)
 
-#ax[0].semilogy(time/864001, e1)
+#ax[0].semilogy(time/86400, e1)
 #ax[0].semilogy(time/86400, np.exp(np.max(gr)*1.65*time)*1e-11)
 
 #ax[0].semilogy(time/86400, e2)
@@ -453,65 +566,17 @@ ax[0].semilogy(time/86400, e3, linestyle='dashed', linewidth=2, label='Linear th
 ax[0].legend()
 
 wpbpi = integrate.trapz(wpbp[:,0,0,:], x=z, axis=-1)/z[-1]
-spi = integrate.trapz(sp[:,0,0,:]+0*lsp[:,0,0,:]+msp[:,0,0,:], x=z, axis=-1)/z[-1]
-dissi= integrate.trapz(diss[:,0,0,:]+hypv[:,0,0,:]+mfdiss[:,0,0,:], x=z, axis=-1)/z[-1]
-sum = wpbpi + spi+dissi 
-ax[1].plot(time/86400, eke[:,0,0,0], label='EKE', linewidth=3)
-ax[1].plot(time[1:]/86400, integrate.cumtrapz(wpbpi, time), linewidth=2, label='VBP')
-ax[1].plot(time[1:]/86400, integrate.cumtrapz(spi, time), linewidth=2, label='SP')
-ax[1].plot(time[1:]/86400, integrate.cumtrapz(dissi, time), linewidth=2, label='DISS')
-ax[1].plot(time[1:]/86400, integrate.cumtrapz(sum[:], time), label='SUM')
-ax[1].set_yscale('symlog', linthreshy=1e-4)
-ax[1].set_yticks([-1e0, -1e-4, 0, 1e-4, 1e-0])
-ax[1].legend()
-#
-#ax[1].plot(time/86400, eket[:], label='eke')
-#ax[1].plot(time/86400, wpbpi)
-#ax[1].plot(time/86400, sp[:,0,0,0])
-#ax[1].plot(time/86400, diss[:,0,0,0])
-#ax[1].plot(time/86400, hypv[:,0,0,0])
-#ax[1].set_yscale('symlog', linthreshy=1e-12)
-
-
-ax[0].grid()
-ax[1].grid()
-ax[1].set_xlabel('Days')
-ax[0].set_title('Eddy kinetic energy')
-ax[0].set_ylabel('m^2s^{-2}')
-ax[0].set_ylim((1e-11, 1e1))
-ax[0].set_xlim((0, 20))
-#ax[1].set_ylim((0,300))
-ax[1].set_xlim((0,20))
-
-ax[1].set_title('Kinetic Energy Budget')
-plt.tight_layout()
-
-
-#%%
-#stint = integrate.trapz(np.exp(2*gr[10:]), x=a['ll'][10:])
-tn = 12
-e1 = np.exp(np.max(gr)*2*time)/np.exp(np.max(gr)*2*time[tn])*eke[tn,0,0,0]
-e2 = stint1/stint1[tn]*eke[tn,0,0,0]
-e3 = stint/stint[tn]*eke[tn,0,0,0]
-#e3 = stint*60
-fig, ax = plt.subplots(2,1,figsize = (8,8), sharex=True)
-#plt.figure(figsize=(5,4))
-ax[0].semilogy(time/86400, eke[:,0,0,0], linewidth=3, label='EKE')
-#ax[0].semilogy(time/86400, eke1[:,0,0,0]/2)
-
-#ax[0].semilogy(time/864001, e1)
-#ax[0].semilogy(time/86400, np.exp(np.max(gr)*1.65*time)*1e-11)
-
-#ax[0].semilogy(time/86400, e2)
-ax[0].semilogy(time/86400, e3, linestyle='dashed', linewidth=2, label='Linear theory')
-ax[0].legend()
+spi = integrate.trapz(sp[:,0,0,:], x=z, axis=-1)/z[-1]
+dissi= integrate.trapz(diss[:,0,0,0:]+hypv[:,0,0,0:], x=z[0:], axis=-1)/z[-1]
 
 sum = wpbpi + spi + dissi
 ax[1].plot(time/86400, eket[:]/(x[-1]*y[-1]*z[-1]), label='EKE tendency', linewidth=3)
+#ax[1].plot(time/86400, eketo[:]/(x[-1]*y[-1]*z[-1]), label='EKE tendency', linewidth=3)
 ax[1].plot(time[:]/86400, wpbpi, linewidth=2, label='Buoyancy prod.')
 ax[1].plot(time[:]/86400, spi, linewidth=2, label='Shear prod.')
 ax[1].plot(time[:]/86400,dissi, linewidth=2, label='Dissipation')
 #ax[1].plot(time/86400, sum[:], label='SUM', linewidth=3)
+#ax[1].plot(time/86400,integrate.trapz(np.mean(np.mean(nterm, axis=1), axis=1), x=z, axis=-1)/z[-1], label='NT', linewidth=3)
 
 #ax[1].plot(time[1:]/86400, integrate.cumtrapz(hypv[:,0,0,0], time))
 #ax[1].set_yscale('symlog', linthreshy=1e-4)
@@ -524,22 +589,22 @@ ax[1].legend()
 #ax[1].plot(time/86400, hypv[:,0,0,0])
 #ax[1].set_yscale('symlog', linthreshy=1e-12)
 
-
+ax[0].set_yticks(np.logspace(-2, 10, 7))
 ax[0].grid()
 ax[1].grid()
 ax[1].set_xlabel('Days')
 #ax[0].set_title('Eddy kinetic energy')
-ax[0].set_ylabel('m^3\;m^2s^{-2}')
-ax[1].set_ylabel('m^2s^{-3}')
+ax[0].set_ylabel('m$^5$ s$^{-2}$')
+ax[1].set_ylabel('m$^2$s$^{-3}$')
 ax[0].set_ylim((1e-2, 5e9))
 ax[0].set_xlim((0, 20))
 #ax[1].set_ylim((0,300))
 ax[1].set_xlim((0,20))
 
 #ax[1].set_title('Kinetic Energy Budget')
-plt.tight_layout()
+#plt.tight_layout()
 
-#fig.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/NLSim_EKE_Ri1.5.pdf', bbox_inches='tight')
+#fig.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/NLSim_Energetics.pdf', bbox_inches='tight')
 #fig.savefig('/home/jacob/Dropbox/Presentations/OS 2018 Slope Presentation/Working Files/Figures/NLSim_EKE.pdf', bbox_inches='tight')
 
 ##%%
@@ -547,11 +612,12 @@ plt.tight_layout()
 #semilogy(time/86400, eket)
 #semilogy(time/86400, 2*np.max(gr)*np.exp(np.max(gr)*2*0.8*time)/1e12)
 #%%
-plt.plot(time/86400, np.max(wpbp[:,0,0,:], axis=-1))
+#plt.plot(time/86400, np.max(wpbp[:,0,0,:], axis=-1))
 #%%
+t1 = 48
 plt.figure()
 plt.plot(wpbp[t1,0,0,:], z)
-plt.plot(sp[t1,0,0,:]+msp[t1,0,0,:], z)
+plt.plot(sp[t1,0,0,:], z)
 plt.plot(diss[t1,0,0,:]+hypv[t1,0,0,:], z)
 #%% TEST GRADIENT
 #tn = 24
@@ -569,38 +635,39 @@ plt.plot(diss[t1,0,0,:]+hypv[t1,0,0,:], z)
 #plt.ylim((0,125))
 #plt.xlim((-1e-2, 1e-2))
 #%% w'b'
-wpbpi = integrate.trapz(wpbp[:,0,0,:], x=z, axis=-1)
-plt.figure()
-plt.semilogy(time/86400, wpbpi)
-plt.semilogy(time/86400, eket)
-plt.semilogy(time/86400, bp[:,0,0,0], label='bp')
+#wpbpi = integrate.trapz(wpbp[:,0,0,:], x=z, axis=-1)
+#plt.figure()
+#plt.semilogy(time/86400, wpbpi)
+#plt.semilogy(time/86400, eket)
+#plt.semilogy(time/86400, bp[:,0,0,0], label='bp')
+
+##%%
+#plt.figure()
+#plt.scatter(np.log(eke[:,0,0,0]/500), np.log(eke1[:,0,0,0]/1000))
+##plt.plot(np.linspace(-14, -7, 10), np.linspace(-14, -7, 10))
+#plt.grid()
+
+
+
+
+
 
 #%%
-plt.figure()
-plt.scatter(np.log(eke[:,0,0,0]/500), np.log(eke1[:,0,0,0]/1000))
-#plt.plot(np.linspace(-14, -7, 10), np.linspace(-14, -7, 10))
-plt.grid()
+#plt.figure()
+#plt.semilogx(freqs[idx], psf[idx], marker='x')
+#plt.semilogx(a['ll']/(2*np.pi), gr)
 
-
-
-
-
-
-#%%
-plt.figure()
-plt.semilogx(freqs[idx], psf[idx], marker='x')
-plt.semilogx(a['ll']/(2*np.pi), gr)
-#%%
-tb = np.transpose(b50[52,:,:,0])+(3.4e-3)**2*np.sin(tht)*x
-tbf = np.tile(tb, (2, 1))
-nc = 100
-bcl = np.linspace(0, 3.5e-3, nc)
-plt.figure(figsize=(8, 1))
-a1 = plt.contourf(np.transpose(tbf), bcl, extend='both', cmap=cm)
-for c in a1.collections:
-    c.set_edgecolor("face")
+##%% FANCY HEADER PLOT
+#tb = np.transpose(b50[52,:,:,0])+(3.4e-3)**2*np.sin(tht)*x
+#tbf = np.tile(tb, (2, 1))
+#nc = 100
+#bcl = np.linspace(0, 3.5e-3, nc)
+#plt.figure(figsize=(8, 1))
+#a1 = plt.contourf(np.transpose(tbf), bcl, extend='both', cmap=cm)
+#for c in a1.collections:
+#    c.set_edgecolor("face")
+##axis('equal')
+#plt.ylim((0, 64))
+#plt.xlim((0, 256*2))
 #axis('equal')
-plt.ylim((0, 64))
-plt.xlim((0, 256*2))
-axis('equal')
-#plt.savefig('/home/jacob/Dropbox/Presentations/OS 2018 Slope Presentation/Working Files/Figures/Header.pdf', bbox_inches='tight')
+##plt.savefig('/home/jacob/Dropbox/Presentations/OS 2018 Slope Presentation/Working Files/Figures/Header.pdf', bbox_inches='tight')

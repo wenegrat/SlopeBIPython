@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.rc('text', usetex=True)
 from pylab import *
+import matplotlib.patches as patches
 
 directoryname = "../DeepShallowModes/"
 directory = os.fsencode(directoryname)
@@ -74,6 +75,16 @@ for i in range(0, thetas.shape[0]):
 ax1.legend(fontsize=fs)
 ax1.grid(linestyle='--', alpha = 0.5, which='Both')
 
+ax1.add_patch(
+    patches.Rectangle(
+        (2e-5, 0),
+        5e-5,
+        0.05,
+        fill=False,      # remove background
+        linestyle='dashed',
+        color='0.4'
+    ))
+    
 newticks = np.array([2*np.pi/50e3, 2*np.pi/10e3, 2*np.pi/1e3])
 newticks = np.array([1/50e3, 1/10e3, 1e-3])
 ax2.set_xscale('log')
@@ -86,7 +97,7 @@ ax2.set_xlabel('Wavelength [km]', labelpad=5, fontsize=fs)
 ax2.grid(False)
 z = a['z']    
 
-#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/IdealizedGrowthRates.eps', format='eps', dpi=1000, bbox_inches='tight')
+#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/IdealizedGrowthRates.pdf', bbox_inches='tight')
 
 #%%
 # Make Background State Plot (FIG 2)

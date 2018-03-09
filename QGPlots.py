@@ -49,7 +49,7 @@ fs =18
 fig, ax = plt.subplots(1, 2, sharey=True, figsize=(12, 7))
 
 ax[0].grid(linestyle='--', alpha = 0.5)
-ax[0].contourf(ll, delta, om,
+a0 = ax[0].contourf(ll, delta, om,
       np.linspace(0, maxc, nc),vmin=-maxc, vmax=maxc, cmap='RdBu_r', labelsize=20)
 CS = ax[0].contour(ll, delta, om, np.linspace(0, maxc, 6),colors='0.5' )
 ax[0].set_yticks([-2, -1, 0, 1, 2])
@@ -77,7 +77,13 @@ plt.tight_layout()
 cbar = fig.colorbar(IM,  ax=ax.ravel().tolist(), orientation='horizontal', shrink = 0.5)
 cbar.set_label('Growth rate, ${\omega}_i$', fontsize=20)
 cbar.set_ticks(np.linspace(0, maxc, 6))
-#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/QGPlot.eps', format='eps', dpi=1000)
+cbar.solids.set_edgecolor("face")
+for c in a0.collections:
+    c.set_edgecolor("face")
+    
+for c in IM.collections:
+    c.set_edgecolor("face")
+#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/QGPlot.pdf', bbox_inches='tight')
 #%%
 #plt.figure()
 #plt.plot(ll, om[250,:])

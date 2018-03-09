@@ -42,7 +42,9 @@ SIRegimeScanPlot.py # Load output of above, make some plots (not used)
 RegimeDiagram.py # Make the regime diagram
 
 
-
+# NONLINEAR SIMULATIONS
+nonlinear_solver.py
+NLSIMPlots.py
 
 
 ## OLD STUFF NOT IN USE
