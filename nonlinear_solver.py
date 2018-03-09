@@ -29,9 +29,9 @@ logger = logging.getLogger(__name__)
 
 
 # Parameters
-directoryname = '/scratch/jacob13/NLSIM/'
-ly_global = np.logspace(-5, -3, 192)*2*np.pi
-OD = False
+#directoryname = '/scratch/jacob13/NLSIM/'
+#ly_global = np.logspace(-5, -3, 192)*2*np.pi
+#OD = False
 
 
 nx = 64
@@ -50,145 +50,14 @@ BLH = 100
 VINT = 0.1
 Shmag = VINT/BLH
 Ri = 1.5
-N = np.sqrt(Ri*Shmag**2+f*Shmag/np.sin(tht))
+N = np.sqrt(Ri*Shmag**2+f*Shmag/np.sin(tht)) # Defines a constant uniform background vertical gradient (also strength of across-slope gradient)
 
-nz = 128
+nz = 256
 
-#%% 1D STABILITY
-z_basis = de.Chebyshev('z', nz, interval=(0,Lz), dealias=3/2)
-if OD:
-    domain = de.Domain([z_basis], grid_dtype=np.complex128, comm=MPI.COMM_SELF)
-else:
-    domain = de.Domain([z_basis], grid_dtype=np.float64, comm=MPI.COMM_SELF)
-z1 = domain.grid(0)
-
-# Define Stability Analysis Parameters
-U = domain.new_field(name='U')
-U['g'] = 0*z1
-Uz = domain.new_field(name='Uz')
-Uz['g'] = 0*z1
-V = domain.new_field(name='V')
-Vz = domain.new_field(name='Vz')
-Bz = domain.new_field(name='Bz')
-B = domain.new_field(name='B')
-V['g'] = VINT
-Bt = np.zeros([nz])
-Bz['g'] = np.array(0*np.ones([nz]))
-Bzbl = -f*Shmag/np.sin(tht)
-
-# Make lower BBL
-zind = np.floor( next((x[0] for x in enumerate(z1) if x[1]>BLH)))
-tpoint = np.floor( next((x[0] for x in enumerate(z1) if x[1]>BLH)))
-tpoint = int(tpoint)
-Bz['g'][0:tpoint] = Bzbl
-Bz['g'][0] = -N**2*np.cos(tht)    
-Vz['g'][0:tpoint] = Shmag
-Bt[1:nz] = integrate.cumtrapz(Bz['g'], z1)
-B['g'] = Bt
-
-V['g'][1:nz] = integrate.cumtrapz(Vz['g'], z1)
-V['g'][0] = 0
-V['g'] = V['g']-VINT
-
-problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz',
-            'bz'], eigenvalue='omg', tolerance = 1e-10)
-problem.parameters['tht'] = tht
-problem.parameters['U'] = U
-problem.parameters['VI'] = V
-problem.parameters['VIb'] = VINT
-problem.parameters['Uz'] = Uz
-problem.parameters['Vz'] = Vz
-problem.parameters['BZI'] = Bz # This is a perturbation (Bztotal = Bz + N**2)
-problem.parameters['N'] = N
-problem.parameters['f'] = f
-problem.parameters['kap'] = kap
-problem.parameters['nu'] = nu
-problem.parameters['A4'] = kap4
-problem.parameters['k'] = 0. # will be set in loop
-problem.parameters['l'] = 0. # will be set in loop
-
-# SUBSTITIONS
-problem.substitutions['dx(A)'] = "1j*k*A"
-problem.substitutions['dy(A)'] = "1j*l*A"
-problem.substitutions['HV(A)'] = '-A4*(dx(dx(dx(dx(A)))) + 2*dx(dx(dy(dy(A)))) + dy(dy(dy(dy(A)))))' #Horizontal biharmonic diff
-problem.substitutions['dt(A)'] = "-1j*omg*A"
-problem.substitutions['D(A,Az)'] = 'kap*dz(Az) + dz(kap)*Az' # Vertical diffusion operator
-
-#problem.add_equation(('dt(u) + V*dy(u)  - f*v*cos(tht) + dx(p)'
-#        '- b*sin(tht) - (dz(nu)*uz+ nu*dz(uz)) - HV(u)= 0'))
-#problem.add_equation(('dt(v)  + V*dy(v) + w*Vz + f*u*cos(tht)'
-#        ' + dy(p) - (dz(nu)*vz + nu*dz(vz)) - HV(v)= 0'))
-#problem.add_equation(('(dt(w) + U*dx(w) + V*dy(w)) + f*v*sin(tht) + dz(p)'
-#        '- b*cos(tht) - (dz(nu)*wz + nu*dz(wz)) - HV(w) = 0'))
-#problem.add_equation((' dz(p)- b*cos(tht)= 0'))
-#problem.add_equation(('dt(b) +  V*dy(b) + u*N**2*sin(tht)'
-#            '+ w*(Bz+N**2*cos(tht)) - dz(kap)*bz - kap*dz(bz) -HV(b)= 0'))
-#problem.add_equation('dx(u) + dy(v) + dz(w) = 0')
-
-problem.add_equation('dt(u) - f*v*cos(tht) + dx(p) - b*sin(tht) - D(u,uz) - HV(u) + VIb*dy(u)  + VI*dy(u)=0')
-problem.add_equation('dt(v) + f*u*cos(tht) + dy(p) - D(v,vz) - HV(v)  + VIb*dy(v) +  VI*dy(v) + w*dz(VI) =0')
-problem.add_equation('dz(p) - b*cos(tht) = 0')
-problem.add_equation('dt(b) + u*N**2*sin(tht) + w*N**2*cos(tht) - D(b,bz) - HV(b) +VIb*dy(b)+ VI*dy(b) + w*BZI =0')
-problem.add_equation('dx(u) + dy(v) + dz(w) = 0')
-
-
-
-problem.add_equation('uz - dz(u) = 0')
-problem.add_equation('vz - dz(v) = 0')
-#problem.add_equation('wz - dz(w) = 0')
-problem.add_equation('bz - dz(b) = 0')
-problem.add_bc('left(u) = 0')
-problem.add_bc('left(v) = 0')
-problem.add_bc('left(w) = 0')
-problem.add_bc('left(bz) = 0')
-problem.add_bc('right(uz) = 0')
-problem.add_bc('right(vz) = 0')
-problem.add_bc('right(w) = 0')
-problem.add_bc('right(bz) = 0')
-
-solver = problem.build_solver()
-
-#%%
-if OD:
-    # Create function to compute max growth rate for given kx
-    def max_growth_rate(ly):
-        logger.info('Computing max growth rate for ly = %f' %ly)
-        # Change kx parameter
-        problem.namespace['l'].value = ly
-        problem.namespace['k'].value = 0 # for now only considering baroclinic axis
-        # Solve for eigenvalues with sparse search near zero, rebuilding NCCs
-    #    solver.solve_sparse(solver.pencils[0], N=10, target=0, rebuild_coeffs=True)
-        solver.solve_dense(solver.pencils[0], rebuild_coeffs=True)
-        omg = solver.eigenvalues
-        omg[np.isnan(omg)] = 0.
-        omg[np.isinf(omg)] = 0.
-        idx = np.argsort(omg.imag)
-    #        print(str(idx[-1]))
-        # Return largest imaginary part
-        return omg[idx[-1]].imag
-    
-    # Compute growth rate over local wavenumbers
-    ly_local = ly_global[CW.rank::CW.size]
-    
-    t1 = time.time()
-    growth_local = np.array([max_growth_rate(ly) for ly in ly_local])
-    t2 = time.time()
-    logger.info('Elapsed solve time: %f' %(t2-t1))
-    
-    # Reduce growth rates to root process
-    growth_global = np.zeros_like(ly_global)
-    growth_global[CW.rank::CW.size] = growth_local
-    if CW.rank == 0:
-        CW.Reduce(MPI.IN_PLACE, growth_global, op=MPI.SUM, root=0)
-    else:
-        CW.Reduce(growth_global, growth_global, op=MPI.SUM, root=0)
-    
-    # Plot growth rates from root process
-    if CW.rank == 0:
-        name = 'StabilityData_'+str(Ri) # Can vary this depending on parameter of interest
-        np.savez(directoryname+name + '.npz', nz=nz, tht=tht, z=z1, f=f, U=U['g'],
-        V=V['g'], B=B['g'], Bz=Bz['g'], Vz=Vz['g'], Lz = Lz, ll=ly_global,N=N,
-        gr=growth_global)
+# CREATE A 1D DOMAIN FOR SIMPLICITY (this is a kludge)
+z_basis = de.Chebyshev('z', nz, interval=(0, Lz), dealias=3/2)
+domain1D = de.Domain([z_basis], grid_dtype=np.float64, comm=MPI.COMM_SELF)
+z1 = domain1D.grid(0)
 
 #%% 3D PROBLEM
 # Create basis and domain
@@ -196,31 +65,57 @@ start_init_time = time.time()
 x_basis = de.Fourier('x', nx, interval=(0, Lx), dealias=3/2)
 y_basis = de.Fourier('y', ny, interval=(0, Ly), dealias=3/2)
 z_basis = de.Chebyshev('z', nz, interval=(0, Lz), dealias=3/2)
+
+
 domain = de.Domain([x_basis, y_basis, z_basis], grid_dtype=np.float64, mesh=None)
 z = domain.grid(2)
 x = domain.grid(0)
+
+
+
+# Define Fields
+
+VI = domain.new_field(name='VI')
+Vz = domain.new_field(name='Vz')
+BZI = domain.new_field(name='BZI')
+B = domain.new_field(name='B')
+Vz['g'] = 0*z1
+#Bt = np.zeros([nz])
+Bzbl = -f*Shmag/np.sin(tht)
+
+# Make lower BBL
+# XXX - Am I defining these terms in z or zhat?
+zind = np.floor( next((x[0] for x in enumerate(z1) if x[1]>BLH)))
+tpoint = np.floor( next((x[0] for x in enumerate(z1) if x[1]>BLH)))
+tpoint = int(tpoint)
+BZI['g'][:,:,0:tpoint] = Bzbl # Set lower BL Bz negative to offset interior strat.
+BZI['g'][:,:,0] = -N**2*np.cos(tht) # To satisfy lower BC   
+Vz['g'][:,:,0:tpoint] = Shmag # Vertical shear only in BBL
+#Bt[1:nz] = integrate.cumtrapz(BZI['g'], z)
+#B['g'] = Bt
+
+VI['g'][:,:,1:nz] = integrate.cumtrapz(Vz['g'], z1)
+VI['g'][:,:,0] = 0 # Satisfy no-slip
+# XXX - Do I need to do this?
+VI['g'] = VI['g']-VINT #Imposing VINT separately to eliminate  pressure gradient terms
+    
+
 # set up IVP
 problem = de.IVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz', 'wz', 'bz'])
 problem.meta[:]['z']['dirichlet'] = True
 
-VI = domain.new_field(name='VI')
-BZI = domain.new_field(name='BZI')
 slices = domain.dist.grid_layout.slices(scales=1)
 z_slice = slices[2]
-#box = np.ones(5)/5
-#VI['g'] = np.convolve(V['g']-VINT, box, mode='same')
-#BZI['g'] = np.convolve(Bz['g'], box, mode='same')
-VI['g'] = V['g']
-BZI['g'] = Bz['g']
+
 # define constants
-problem.parameters['N'] = N
+problem.parameters['N'] = N #Fixed background stratification
 problem.parameters['f'] = f
 problem.parameters['tht'] = tht
 problem.parameters['kap'] = kap
 problem.parameters['L'] = Lx
 problem.parameters['H'] = Lz
-problem.parameters['A4'] = kap4
-problem.parameters['VI'] = VI
+problem.parameters['A4'] = kap4 
+problem.parameters['VI'] = VI 
 problem.parameters['VIb'] = VINT
 problem.parameters['BZI'] = BZI
 
@@ -232,7 +127,7 @@ problem.substitutions['HV(A)'] = '-A4*(dx(dx(dx(dx(A)))) + 2*dx(dx(dy(dy(A)))) +
 # substitutions for diagnostics
 problem.substitutions['zf'] = 'x*sin(tht) + z*cos(tht)'
 problem.substitutions['havg(A)'] = "integ(A, 'x', 'y')/L**2"
-problem.substitutions['prime(A)'] = "A - integ(A,'y')/L"
+problem.substitutions['prime(A)'] = "A - havg(A)"
 problem.substitutions['EKE']  = '(prime(u)**2 + prime(v)**2)/2'
 problem.substitutions['avg(A)'] = "integ(A, 'x', 'y', 'z')/L**2"
 problem.substitutions['vint(A)'] = "integ(A, 'z')"
@@ -313,6 +208,7 @@ snap.add_task("-avg(zf*b)", name='pe')
 snap.add_task("avg(u**2 + v**2)/2", name='ke')
 snap.add_task("vint(havg(u)**2 + havg(v)**2)/2", name='mke')
 snap.add_task('avg(EKE)', name='eke')
+
 # buoyancy fields
 snap.add_task("interp(b, z=0)", scales=1, name='b surface')
 snap.add_task("interp(b, z=10)", scales=1, name='b 10')
@@ -327,19 +223,31 @@ snap.add_task("w", scales=1, name='w')
 snap.add_task("b", scales=1, name='b')
 snap.add_task('VI', scales=1, name='V')
 snap.add_task('BZI', scales=1, name='Bz')
+#snap.add_task('prime(u)', scales=1, name='u prime')
+#snap.add_task('prime(v)', scales=1, name='v prime')
 
 # KE budget
-snap.add_task("avg(prime(u)*prime(b)*sin(tht) + prime(w)*prime(b)*cos(tht))", name='byncy prdctn')
-snap.add_task("avg(prime(u)*prime(D(u,uz)) + prime(v)*prime(D(v,vz)))", name='dssptn')
-snap.add_task("vint(havg(u)*havg(b)*sin(tht))", name='mean byncy prdctn')
-snap.add_task("-vint(kap*(havg(uz)**2 + havg(vz)**2))", name='mean dssptn')
+#snap.add_task("avg(prime(u)*prime(b)*sin(tht) + prime(w)*prime(b)*cos(tht))", name='byncy prdctn')
+#snap.add_task("vint(havg(u)*havg(b)*sin(tht))", name='mean byncy prdctn')
+#snap.add_task("-vint(kap*(havg(uz)**2 + havg(vz)**2))", name='mean dssptn')
 #snap.add_task("vint(havg(uz)*havg(u*w) + havg(vz)*havg(v*w))", name='shear prod')
-snap.add_task("avg(prime(u)*prime(HV(u)) +prime(v)*prime(HV(v)))", name='hypv')
 
 snap.add_task("havg(prime(w)*prime(b)*cos(tht) + prime(u)*prime(b)*sin(tht))", name='wpbp')
-snap.add_task("-avg(prime(v)*prime(w)*(vz))", name='shear prod')
+#snap.add_task("-havg(prime(v)*prime(w)*havg(vz))", name='shear prod')
+snap.add_task("-havg(prime(v)*prime(w)*havg(dz(v+VI)) + prime(u)*prime(w)*havg(uz))", name='sp')
+snap.add_task("havg(prime(u)*D(prime(u), prime(uz)) + prime(v)*D(prime(v+VI), prime(vz + dz(VI))))", name='vertical diss')
+snap.add_task("havg(prime(u)*HV(prime(u)) + prime(v)*HV(prime(v+VI)))", name='hyper diss')
 
-#snap.add_task("integ(b, 'z')", name='b integral x4', scales=4)
+#snap.add_task("-havg(prime(v)*prime(w)*cos(tht) + prime(u)*prime(v)*sin(tht))*dz(VI)", name='mf shear prod')
+#snap.add_task("-havg(prime(u)*prime(u)*dx(u) +prime(u)*prime(v)*dy(v) + prime(v)*prime(v)*dy(v) + prime(v)*prime(v)*dx(u))", name='lat shear prod')
+#snap.add_task("-havg(prime(u)*u*dx(u) +prime(u)*(v+VI+VIb)*dy(v) + prime(v)*(v+VI+VIb)*dy(v) + prime(v)*(v+VI+VIb)*dx(u))", name='lat shear prod 2')
+#snap.add_task("havg(prime(u)*prime(D(u,uz)) + prime(v)*prime(D(v,vz)))", name='dssptn')
+#snap.add_task("havg(prime(v)*D(VI, dz(VI)))", name='mf dssptn')
+#snap.add_task("havg(prime(u)*HV(u) +prime(v)*HV(v))", name='hypv')
+#snap.add_task("-havg(prime(v)*prime(w)*dz(v+VI))", name='tot shear prod')
+#snap.add_task("-havg(prime(v)*prime(w)*havg(dz(v+VI)))", name='avg shear prod')
+#snap.add_task("havg(u*D(u,uz) + v*D(v,vz))", name='f dssptn')
+#snap.add_task("havg((w)*(b))", name='f wpbp')
 
 # CFL
 CFL = flow_tools.CFL(solver, initial_dt=1e-4, cadence=1, safety=1.5,
@@ -347,10 +255,7 @@ CFL = flow_tools.CFL(solver, initial_dt=1e-4, cadence=1, safety=1.5,
 CFL.add_velocities(('u', 'v', 'w'))
 
 # Flow properties
-#flow = flow_tools.GlobalFlowProperty(solver, cadence=10)
-#flow.add_property("sqrt(u*u + v*v + w*w) / R", name='Re')
-#logger.info('Pausing 10 sec.')
-#time.sleep(30)
+
 # Main loop
 end_init_time = time.time()
 logger.info('Initialization time: %f' %(end_init_time-start_init_time))
@@ -362,7 +267,6 @@ try:
         solver.step(dt)
         if (solver.iteration-1) % 10 == 1:
             logger.info('Iteration: %i, Days: %1.1f, dt: %e' %(solver.iteration, solver.sim_time/86400, dt))
-#            logger.info('Max Re = %f' %flow.max('Re'))
             utemp = solver.state['u']
             if utemp['g'].size > 0:
                 um = np.max(np.abs(utemp['g']))
