@@ -110,6 +110,8 @@ ax1.set_xlim((0,3))
 cbar = fig.colorbar(im, pad=0.125)
 cbar.set_ticks(np.linspace(0, maxc, 7))
 cbar.set_label('Growth rate, ${\omega}_i$', fontsize=20, labelpad=10)
+cbar.solids.set_edgecolor("face")
+
 CS = ax1.contour(a['ll']/(a['f']/(a['Vz'][-1]*a['H'])), rivec, grn, 
             np.linspace(.05, maxc, 6),colors='0.5' )
 ax1.tick_params(axis='both', which='major', labelsize=fs)
@@ -119,7 +121,8 @@ ax1.set_ylabel('$\mathrm{Ri}$', fontsize=20)
 ax1.set_xticks([0, 1, 2, 3])
 
 
-
+for c in im.collections:
+    c.set_edgecolor("face")
 
 #print("Maximum Ri processed: "+str(np.max(rivec[rivec!=0])))
 
@@ -144,6 +147,7 @@ plt.tight_layout()
 #ax2.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/RiStability.eps', format='eps', dpi=1000)
 
+plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/RiStability.pdf')
 
 
 #%%

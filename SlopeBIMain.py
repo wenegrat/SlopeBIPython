@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Oct 26 15:06:43 2017
-Main Script Compiled to Keep Track of Different Functions
-
-Analysis and Figures for:
-    Submesoscale Baroclinic Instability in the Bottom Boundary Layer
     Wenegrat, Callies, Thomas (submitted 12/17)
 @author: jacob
 """
@@ -25,6 +20,7 @@ QGPlots.py # Makes the Mechoso 1980 plots of growth rate vs. delta for the QG li
 # FIGURE 6, 7
 SlopeBIParallelStone.py # Calculates growth rates varying theta (delta) for fixed N2, Uz
 StabilityContour.py # Plots for the above stability calculations.
+StabilityContourDual.py # Combo Ri=10, 1 plot.
 
 # FIGURE 8
 SlopeBIParallelRi.py # Calculates growth rate at fixed theta, N2 and varying Ri
@@ -47,12 +43,19 @@ SIRegimeScanPlot.py # Load output of above, make some plots (not used)
 RegimeDiagram.py # Make the regime diagram
 
 
-
+# NONLINEAR SIMULATIONS
+nonlinear_solver.py
+NLSIMPlots.py
 
 
 ## OLD STUFF NOT IN USE
 MixingStability.py # Calculates 1D mixing-problem, then checks stability characteristics.
-EkmanSolver.py # Version of Ekman solver written using Dedalus, doesn't work for time varying kappa
+EkmanSolv
+Created on Thu Oct 26 15:06:43 2017
+Main Script Compiled to Keep Track of Different Functions
+
+Analysis and Figures for:
+    Submesoscale Baroclinic Instability in the Bottom Boundary Layerer.py # Version of Ekman solver written using Dedalus, doesn't work for time varying kappa
 nonlinear_solver.py # 3D NS Solver, doesn't work very well.
 bci.py # 3D NS Solver from Joern. Works ok until blow-up...
 EkmanSolverForward.py # Integrates the 1D BBL Ekman problem forward in time, saves figs and files

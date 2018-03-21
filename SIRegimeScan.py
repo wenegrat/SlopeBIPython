@@ -118,7 +118,7 @@ for Ri in rivec:
         VSP = -2*np.real((w['g'])*np.conj(v['g'])*Vzhat*np.cos(tht) + np.conj(v['g'])*u['g']*Vzhat*np.sin(tht))
 
         Vx = -Lmd/np.cos(tht)*np.sin(tht)
-        LSP = -2*np.real(0*np.conj(v['g'])*u['g']*np.cos(tht) -(w['g'])*np.conj(v['g'])*np.sin(tht))*Vx
+        LSP = -2*np.real(np.conj(v['g'])*u['g']*np.cos(tht) -(w['g'])*np.conj(v['g'])*np.sin(tht))*Vx
 
         BP = 2*np.real((u['g']*np.sin(tht)+w['g']*np.cos(tht))*np.conj(b['g']))
         HHF = -2*np.real(f*Lmd/N**2*(u['g']*np.cos(tht)-w['g']*np.sin(tht))*np.conj(b['g']))

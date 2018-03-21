@@ -66,8 +66,8 @@ V['g'] = Shmag*(z)
 Vz['g'] = Shmag*(z-z+1) #Note this assumes no horizotal variation (ie. won't work for the non-uniform case)
 Bt = np.zeros([nz])
 Bz['g'] = np.array(Bzmag*np.ones([nz]))
-zind = np.floor( next((x[0] for x in enumerate(z) if x[1]>BLH)))
-Bz['g'][0:zind] = BzmagBL
+#zind = np.floor( next((x[0] for x in enumerate(z) if x[1]>BLH)))
+#Bz['g'][0:zind] = BzmagBL
 
 tpoint = np.floor( next((x[0] for x in enumerate(z) if x[1]>BLH)))
 Bstr  = -0.5*(np.tanh((-z + z[tpoint])/40)+1)
@@ -131,8 +131,8 @@ w = solver.state['w']
 b = solver.state['b']
 #%%
 # shear production
-VSP = -2*np.real(np.conj(w['g'])*v['g']*Vz['g'] + np.conj(v['g'])*u['g']*Vz['g']*np.sin(tht))
-Vx = Vz['g']*np.sin(tht)
+VSP = -2*np.real(np.conj(w['g'])*v['g']*Vz['g']*np.cos(tht) + np.conj(v['g'])*u['g']*Vz['g']*np.sin(tht))
+Vx = Vz['g']*np.sin(tht)/np.cos(tht)
 LSP = -2*np.real(-np.conj(w['g'])*v['g']*Vx*np.sin(tht) + np.conj(v['g'])*u['g']*Vx)
 
 # buoyancy production
@@ -150,10 +150,12 @@ BP = 2*np.real((u['g']*np.sin(tht)+w['g']*np.cos(tht))*np.conj(b['g']))
 cm = 'RdBu_r'
 # most unstable mode
 fs = 18
-
+fs = 20
 plt.rcParams['text.usetex'] = True
 plt.rcParams.update({'font.size': fs})
 plt.rcParams['contour.negative_linestyle'] = 'solid'
+plt.rcParams.update({'ytick.labelsize':fs})
+plt.rcParams.update({'xtick.labelsize':fs})
 
 nc  = 16
 lw =0.5
@@ -248,7 +250,9 @@ ax5.plot((VSP+LSP)/np.max(BP), z)
 ax5.set_xlabel('Kinetic energy tendency', fontsize=fs)
 ax5.set_ylabel('Slope-normal coordinate [m]', fontsize=fs)
 ax5.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-leg = ax5.legend(['Buoyancy Production', 'Shear Production'], frameon=True, fontsize=12, loc=9)
+#leg = ax5.legend(['Buoyancy Production', 'Shear Production'], frameon=True, fontsize=12, loc=9)
+leg = ax5.legend(['Buoyancy Production', 'Shear Production'], frameon=True, fontsize=fs,bbox_to_anchor=(-0.4, 1.02), loc=3)
+
 leg.get_frame().set_alpha(.9)
 #plt.tight_layout()
 ax5.set_ylim((0, 1000))
@@ -270,4 +274,6 @@ ax4.set_yticklabels(emptylabels)
 #plt.tight_layout()
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/IdealizedPerturbationsCombo.pdf', format='pdf', bbox_inches='tight')
 #fig.subplots_adjust(wspace=10, vspace=0.1)
+#plt.savefig('/home/jacob/Dropbox/Presentations/OS 2018 Slope Presentation/Working Files/Figures/IdealizedPerturbationsCombo.pdf', format='pdf', bbox_inches='tight')
+
 plt.show()

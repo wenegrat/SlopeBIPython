@@ -33,9 +33,12 @@ logger = logging.getLogger(__name__)
 #ly_global = np.logspace(-5, -3, 192)*2*np.pi
 #OD = False
 
-nx = 128
-ny = 128
-Lx, Ly, Lz = (nx*1e3/4,ny*1e3/4, 1000.)
+
+
+nx = 64
+ny = 64
+Lx, Ly, Lz = (nx*1e3/2,ny*1e3/2, 1000.)
+
 f = 1e-4 # Coriolis parameter
 #N2 = (12*f)**2
 #N = (3.4e-3)
@@ -158,7 +161,7 @@ problem.add_bc('left(p) = 0', condition='(nx == 0) and (ny == 0)')
 problem.add_bc('right(bz) = 0')
 
 # Build solver
-solver = problem.build_solver(de.timesteppers.RK443)
+solver = problem.build_solver(de.timesteppers.MCNAB2)
 logger.info('Solver built')
 
 # Initial conditions

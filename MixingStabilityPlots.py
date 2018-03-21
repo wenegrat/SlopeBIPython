@@ -97,33 +97,48 @@ plt.rcParams['font.family'] = 'STIXGeneral'
 
 fig, ax = plt.subplots(1, 3, sharey=True,figsize=(9, 5))
 
-ax[0].semilogx(kap, z, linewidth=2)
-ax[0].set_xticks([1e-5, 1e-4, 1e-3])
-ax[0].set_xlabel('Mixing coefficient [m$^2$/s]', fontsize=fs)
+#ax[0].semilogx(kap, z, linewidth=2)
+p1=ax[0].plot(U.real, z, linewidth=2, label='Across-slope')
+p2=ax[0].plot(V.real, z, linewidth=2, label='Along-slope')
+ax[0].set_xticks([-0.1, -0.05, 0])
+ax[0].set_xlim((-0.1, .005))
+ax[0].set_xlabel('Mean flow [m/s]', fontsize=fs)
 ax[0].set_ylabel('Slope-normal coordinate [m]', fontsize=fs)
 ax[0].grid(linestyle='--', alpha = 0.5)
 ax[0].set_ylim((0, 2500))
-
+ax[0].legend(loc=9, prop={'size': 14})
+#l1 = ax[0].legend([p1], ["Label 1"], loc=1)
+#l2 = ax[0].legend([p2], ["Label 2"], loc=4) # this removes l1 from the axes.
+#ax[0].add_artist(l1) # add l1 as a separate artist to the axes
 #ax[0].get_xaxis().set_label_coords(.5, -.12)
 
-ax[1].plot(U.real, z, linewidth=2)
-ax[1].plot(V.real, z, linewidth=2)
+
 #ax[1].set_xlim((0, 0.1))
-ax[1].set_xticks([-0.1, -0.05, 0])
-ax[1].set_xlim((-0.1, .005))
+
 ax[1].set_ylim((0, 2500))
-ax[1].set_xlabel('Mean flow [m/s]', fontsize=fs)
 #ax[1].get_xaxis().set_label_coords(.5, -.12)
 ax[1].grid(linestyle='--', alpha = 0.5)
 
-ax[2].plot(N**2*np.cos(tht)*z + B.real, z, linewidth=2)
-ax[2].set_xlabel('Mean buoyancy [m/s$^2$]', fontsize=fs)
+ax[1].plot(N**2*np.cos(tht)*z + B.real, z, linewidth=2)
+ax[1].set_xlabel('Mean buoyancy [m/s$^2$]', fontsize=fs)
 #ax[2].get_xaxis().set_label_coords(.5, -.12)
-ax[2].set_xlim((0, 0.002))
-ax[2].set_ylim((0, 2500))
+ax[1].set_xlim((0, 0.002))
+ax[1].set_ylim((0, 2500))
+ax[1].grid(linestyle='--', alpha = 0.5)
+
+
+ax[2].semilogx(Ri, z, linewidth=2)
+ax[2].set_xticks(np.logspace(-1, 3, 5))
+ax[2].set_xlabel('Richardson Number', fontsize=fs, labelpad=8)
+#ax[3].set_ylabel('Slope-normal coordinate [m]', fontsize=fs)
 ax[2].grid(linestyle='--', alpha = 0.5)
+ax[2].set_ylim((0, 2500))
+ax[2].set_xlim((1e-1, 1000))
 plt.tight_layout()
+
+
 #fig.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingBasicState.pdf')
+#fig.savefig('/home/jacob/Dropbox/Presentations/OS 2018 Slope Presentation/Working Files/Figures/MixingBasicState.pdf')
 
 # energetics
 #%% Growth Rates
@@ -139,10 +154,11 @@ ax2 = ax1.twiny()
 
 ax1.semilogx(ll/(2*np.pi), gr, linewidth=2)
 ax1.set_xlabel('Along-slope wavenumber [m$^{-1}$]', fontsize=fs)
-ax1.set_ylabel('Growth rate [$s^{-1}$]', fontsize=fs)
+ax1.set_ylabel('Growth rate [s$^{-1}$]', fontsize=fs)
 ax1.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
 ax1.grid(linestyle='--', alpha = 0.5, which='Both')
 ax1.set_xlim((3e-6, 1e-3))
+ax1.set_ylim((0, 2.25e-6))
 newticks = np.array([1/100e3, 1/10e3, 1/1e3])
 ax2.set_xscale('log')
 #
@@ -155,7 +171,7 @@ ax2.ticklabel_format(style='sci', axis='y', scilimits=(0, 0))
 
 plt.tight_layout()
 
-#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingStability.pdf')
+#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/MixingStability.pdf')
 
 
 ##%%
@@ -272,7 +288,7 @@ plt.tight_layout()
 cm = 'RdBu_r'
 # most unstable mode
 fs = 18
-
+fs = 20
 plt.rcParams['text.usetex'] = True
 plt.rcParams.update({'font.size': fs})
 plt.rcParams['contour.negative_linestyle'] = 'solid'
@@ -361,7 +377,9 @@ ax5.plot(DISS/np.max(BP), z)
 ax5.set_xlabel('Kinetic energy tendency', fontsize=fs)
 ax5.set_ylabel('Slope-normal coordinate [m]', fontsize=fs)
 ax5.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-leg = ax5.legend(['Buoyancy Production', 'Shear Production', 'Dissipation'], frameon=True, fontsize=12, loc=9)
+#leg = ax5.legend(['Buoyancy Production', 'Shear Production', 'Dissipation'], frameon=True, fontsize=12, loc=9)
+leg = ax5.legend(['Buoyancy Production', 'Shear Production', 'Dissipation'], frameon=True, fontsize=fs,bbox_to_anchor=(-0.4, 1.02), loc=3)
+
 leg.get_frame().set_alpha(.9)
 #plt.tight_layout()
 ax5.set_ylim((0, 2500))
@@ -384,4 +402,6 @@ ax4.set_yticklabels(emptylabels)
 #plt.tight_layout()
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/MixingPerturbationsCombo.pdf', format='pdf', bbox_inches='tight')
 #fig.subplots_adjust(wspace=10, vspace=0.1)
+#plt.savefig('/home/jacob/Dropbox/Presentations/OS 2018 Slope Presentation/Working Files/Figures/MixingPerturbationsCombo.pdf', format='pdf', bbox_inches='tight')
+
 plt.show()
