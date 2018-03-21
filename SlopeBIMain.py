@@ -20,6 +20,7 @@ QGPlots.py # Makes the Mechoso 1980 plots of growth rate vs. delta for the QG li
 # FIGURE 6, 7
 SlopeBIParallelStone.py # Calculates growth rates varying theta (delta) for fixed N2, Uz
 StabilityContour.py # Plots for the above stability calculations.
+StabilityContourDual.py # Combo Ri=10, 1 plot.
 
 # FIGURE 8
 SlopeBIParallelRi.py # Calculates growth rate at fixed theta, N2 and varying Ri

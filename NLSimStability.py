@@ -20,9 +20,10 @@ logger = logging.getLogger(__name__)
 import h5py
 
 ly_global = np.logspace(-5, -3, 192)*2*np.pi
+ly_global = np.logspace(-5, -3, 64)*2*np.pi
 
 directoryname='/home/jacob/dedalus/NLSIM/'
-filename = '/home/jacob/dedalus/NLSIM/snapshots/snapshots_s1.h5'
+filename = '/home/jacob/dedalus/NLSIM/snapshots/snapshots_s1_LD2.h5'
 fil = h5py.File(filename, 'r')
 
 # List all groups
@@ -38,7 +39,7 @@ f = 1e-4 # Coriolis parameter
 #N2 = (12*f)**2
 #N = (3.4e-3)
 tht = 0.01 # slope angle
-kap4 = 2e5
+kap4 = 2e5/2
 nu = 1e-5
 kap = nu # Unit Pr
 
@@ -54,22 +55,22 @@ z_basis = de.Chebyshev('z', nz, interval=(0,Lz), dealias=1)
 
 domain = de.Domain([z_basis], grid_dtype=np.complex128, comm=MPI.COMM_SELF)
 
-z1 = domain.grid(0)
-
+z1 = domain.grid(0, scales=1)
+z0 = domain.grid(0, scales=1)
 
 # DEFINE FIELDS
-tn = 12 # Day 3 if 6 hour timesteps
-V = domain.new_field(name='V')
-Vz = domain.new_field(name='Vz')
-Bz = domain.new_field(name='Bz')
-B = domain.new_field(name='B')
+tn = 6 # Day 1 if 6 hour timesteps
+V = domain.new_field(name='V', scales=1)
+Vz = domain.new_field(name='Vz', scales=1)
+Bz = domain.new_field(name='Bz', scales=1)
+B = domain.new_field(name='B', scales=1)
 
 V['g'] = fil['tasks']['V'][tn,0,0,:]  + np.mean(np.mean(fil['tasks']['v'][tn,:,:,:], axis=0), axis=0)
 V.differentiate('z', out=Vz)
 
 B['g'] = np.mean(np.mean(fil['tasks']['b'][tn,:,:,:], axis=0), axis=0)
 B.differentiate('z', out=Bz)
-Bz['g'] = fil['tasks']['Bz'][tn, 0, 0,:] + Bz['g']
+Bz['g'] = np.interp(z1, z0, fil['tasks']['Bz'][tn, 0, 0,:]) + Bz['g']
 
 problem = de.EVP(domain, variables=['u', 'v', 'w', 'b', 'p', 'uz', 'vz',
             'bz'], eigenvalue='omg', tolerance = 1e-10)
@@ -99,7 +100,7 @@ problem.substitutions['D(A,Az)'] = 'kap*dz(Az) + dz(kap)*Az' # Vertical diffusio
 problem.add_equation('dt(u) - f*v*cos(tht) + dx(p) - b*sin(tht) - D(u,uz) - HV(u) + VIb*dy(u)  + VI*dy(u)=0')
 problem.add_equation('dt(v) + f*u*cos(tht) + dy(p) - D(v,vz) - HV(v)  + VIb*dy(v) +  VI*dy(v) + w*dz(VI) =0')
 problem.add_equation('dz(p) - b*cos(tht) = 0')
-problem.add_equation('dt(b) + u*N**2*sin(tht) + w*N**2*cos(tht) - D(b,bz) - HV(b) +VIb*dy(b)+ VI*dy(b) + w*BZI =0')
+problem.add_equation('dt(b) + u*N**2*sin(tht) + w*N**2*cos(tht) - D(b,bz) - HV(b) +VIb*dy(b)+ VI*dy(b) + w*BZI  = 0')
 problem.add_equation('dx(u) + dy(v) + dz(w) = 0')
 
 

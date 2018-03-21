@@ -101,6 +101,6 @@ plt.tight_layout()
 
 print("Maximum \delta processed: "+str(np.max(thetas[thetas!=0])*a['Bz'][-1]/(a['f']*a['Vz'][-1])))
 
-plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/StabilityRi1.pdf', bbox_inches='tight')
+#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/StabilityRi1.pdf', bbox_inches='tight')
 #plt.savefig('/home/jacob/Dropbox/Presentations/OS 2018 Slope Presentation/Working Files/Figures/StabilityRi1.pdf')
 

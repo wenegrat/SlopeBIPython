@@ -23,7 +23,7 @@ plt.rcParams['mathtext.fontset'] = 'stix'
 plt.rcParams['font.family'] = 'STIXGeneral'
 
 # LOAD
-a = np.load('/home/jacob/dedalus/NLSIM/StabilityData_1.5.npz');
+a = np.load('/home/jacob/dedalus/NLSIM/StabilityData_1.5_day1.5.npz');
 z = a['z']
 #U = a['U']
 V = a['V']
@@ -60,6 +60,9 @@ ax1.set_ylim((0, .25))
 plt.grid(linestyle='--', alpha = 0.5)
 #ax1.axvline(x=1/(6.5e3))
 ax1.axvline(x=1/(5.5e3))
+ax1.axvline(x=5/(32e3))
+ax1.axvline(x=6/(32e3))
+
 
 ax1.legend(fontsize=fs)
 ax1.grid(linestyle='--', alpha = 0.5, which='Both')
@@ -109,12 +112,14 @@ y = u.dims[2][0][:]
 z = u.dims[3][0][:]
 time = u.dims[0][0][:]
 
-eke = f['tasks']['eke']*x[-1]*y[-1]
+eke = f['tasks']['eke']
+eke = eke[:,:,:,:]*(x[-1])**2
 
 wpbp = f['tasks']['wpbp']
 sp = f['tasks']['sp'] #slope normal pert shear
 diss = f['tasks']['vertical diss']
 hypv = f['tasks']['hyper diss']
+#mdiss = f['tasks']['mean vert diss']
 #tsp = f['tasks']['tot shear prod']
 #msp = f['tasks']['mf shear prod'] #slope normal prod mean flow
 #lsp = f['tasks']['lat shear prod 2'] # lat shear produc 
@@ -143,6 +148,16 @@ for i in range(0, nr):
     grt[i,:] = np.exp(2*gr[i]*time)
 stint1 = integrate.trapz(grt,x=a['ll'], axis=0)
 
+
+#%% CALCULATE ALPHA PARAMETER
+
+Ntot = np.sqrt(N**2-np.abs(Bz[0,0,0,:]*np.cos(tht))) #right way
+#Ntot = N-np.sqrt(np.abs(Bz[0,0,0,:]*np.cos(tht))) #wrong way
+
+#Ntot = np.sqrt(N**2 - 1e-4*0.1/100/np.sin(tht))
+Sburger = Ntot**2/1e-8*np.tan(tht)**2
+alpha = Ntot/1e-4*np.tan(tht)*np.sqrt(1.5)
+alpha = np.sqrt(Sburger*1.5)
 #%%
 #ubar = np.mean(np.mean(u, axis=1), axis=1)
 #dubar = np.gradient(ubar,  21600, axis=0)
@@ -437,123 +452,172 @@ ax[1,2].xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(f))
 
 #%% CALCULATE POWER SPECTRAL DENSITY AS FUNCTION OF WAVENUMBER
 
-tn = 12
-time_step = 500
-psf = np.zeros((nx,))
-grt = np.float64(np.zeros((nx, time.size)))
-pst = np.zeros((nz, nx))
+time_step = x[2]-x[1]
 
-ubar = np.mean(np.mean(u, axis=1), axis=1)
-vbar = np.mean(np.mean(v, axis=1), axis=1)
-uprime = 0*u[:,:,:,:]
-vprime = 0*u[:,:,:,:]
+ubar = integrate.trapz(integrate.trapz(u,x=x, axis=1),x=y, axis=1)/(x[-1]*y[-1])
+vbar = integrate.trapz(integrate.trapz(v,x=x, axis=1),x=y, axis=1)/(x[-1]*y[-1])
+
+uprime = 0*np.zeros(u.shape)
+vprime = 0*np.zeros(u.shape)
 for i in range(0, nx):
     for j in range(0, ny):
         uprime[:,i,j,:] = u[:,i,j,:] - ubar
         vprime[:,i,j,:] = v[:,i,j,:] - vbar
 
 #%%
-for i in range(0,nx):
-    for j in range(0, nz):
-#        datau = u[tn,i,:,j]
+tn = 6*1 # Set the timestep to use the EKE spectrum from
+nf = nx*1 # Periodic domain, so should be nx
+
+#Preallocate
+psf = np.zeros((nf,))
+psfu = np.zeros((nf, ))+1j*0
+psfv = np.zeros((nf, ))+1j*0
+pst = np.zeros((nz, nf))
+pstu = np.zeros((nz, nf))+1j*0
+pstv = np.zeros((nz, nf))+1j*0
+
+for i in range(0,nx):# Loop over each x
+    dke = np.zeros(( nx,))
+    for j in range(0, nz): #loop over each y
         datau = uprime[tn, i , : , j]
-#        datau = datau-np.mean(datau)
-#        datav = v[tn,i,:,j]
-#        datav = datav-np.mean(datav)
+        datau = datau-np.mean(datau)
         datav = vprime[tn,i, :, j]
-        datake = (datau**2 + datav**2)/2
+        datav = datav-np.mean(datav)
+
+        datake = (datau**2 + datav**2)/2 #Alternate way to calculate it.
 #        datake = datake-np.mean(datake)
-        psu = np.abs(np.fft.fft(datau))
-        psv = np.abs(np.fft.fft(datav))
-#        pst[j,:] = ((psu)**2 + psv**2)
-        pst[j,:] = np.abs(np.fft.fft(datake))
-    psf[:] += integrate.trapz(pst, x=z, axis=0)
         
-psf = psf/(nx*nz)     
-   
-freqs = np.fft.fftfreq(datau.size, time_step)
+        #Take FFTs
+#        pst[j,:] = np.abs(np.fft.fft(datake, n=nf))
+        psu = (np.fft.fft(datau, n=nf))
+        psv = (np.fft.fft(datav, n=nf))
+        pst[j,:] = (np.abs(psu)**2 + np.abs(psv)**2)/2
+        pstu[j,:] = psu
+        pstv[j,:] = psv
+    # Sum across all x and y
+    psf[:] += integrate.trapz(pst, x=z, axis=0)
+    psfu[:] += integrate.trapz(pstu, x=z, axis=0)
+    psfv[:] += integrate.trapz(pstv, x=z, axis=0)
+
+#psfu = (np.fft.fft(integrate.trapz(integrate.trapz(uprime[tn,:,:,:], x=z, axis=-1), x=x, axis=0), n=nf))    
+#psfv = (np.fft.fft(integrate.trapz(integrate.trapz(vprime[tn,:,:,:], x=z, axis=-1), x=x, axis=0), n=nf))    
+
+# Normalization
+psf = psf*time_step
+psfu = psfu*time_step
+psfv = psfv*time_step
+
+# Make and sort wavenumber array
+freqs = np.fft.fftfreq(psf.size, time_step)
 idx = np.argsort(freqs)
 freqs = freqs[idx]
 psf = psf[idx]
-gri = np.interp(freqs, a['ll']/(2*np.pi), gr, left=0, right=0)
-for i in range(0, nx):
-    grt[i,:] = np.exp(2*gri[i]*(time))*psf[i]
+psfu = psfu[idx]
+psfv = psfv[idx]
+# Turn into 1-sided FFT
+psf[freqs<0] = 0
+psfu[freqs<0] =0 
+psfv[freqs<0] = 0
+psf = 2*np.abs(psf)
+psfu = 2*np.abs(psfu)
+psfv = 2*np.abs(psfv)
+#psf = psf/integrate.trapz(psf, x=freqs, axis=0)
+#psfu = psfu/integrate.trapz(np.abs(psfu)**2, x=freqs, axis=0)
+#psfv = psfv/integrate.trapz(np.abs(psfv)**2, x=freqs, axis=0)
+
+# Interpolate linear stability growth rates to FFT frequencies
+# Factor of 2 comes from the squared FFT.
+gri = np.interp(freqs, a['ll']/(2*np.pi)*2, gr, left=0, right=0)
+freqsalt = np.linspace(0, 20, 21)/x[-1] #Alternate discretization.
+freqsalt = freqs[:]*2 
+#gri = np.interp(freqsalt, a['ll']/(2*np.pi)*2, gr, left=0, right=0)
+#psf = np.interp(freqsalt, freqs, psf)
+#psfu = np.interp(freqsalt, freqs, psfu)
+#psfv = np.interp(freqsalt, freqs, psfv)
+
+grt = np.float64(np.zeros((psf.size, time.size)))
+grtu = np.float64(np.zeros((psf.size, time.size)))+1j*0
+grtv = np.float64(np.zeros((psf.size, time.size)))+1j*0
+for i in range(0, psf.size):
+    grt[i,:] = np.exp(2*gri[i]*1*(time-time[tn]))*psf[i]
+#    grtu[i,:] = (np.exp(gri[i]*0.95*(time-time[tn]))*psfu[i])
+#    grtv[i,:] = ( np.exp(gri[i]*0.95*(time-time[tn]))*psfv[i])
+    
+#    grt[i,:] = 0.5*(grtu[i,:]*np.conj(grtu[i,:]) + grtv[i,:]*np.conj(grtv[i,:]))
 #    if gri[i]==0:
+#        grt[i,:]=0
+#    if freqs[i]<0:
 #        grt[i,:] = 0
     
-stint = integrate.trapz(grt,x=freqs, axis=0)
+#stint = integrate.trapz(grt,x=freqsalt, axis=0)
+
+stint = np.sum(grt, axis=0)
 
 #%%
+tp= np.zeros((nt, nf))
+grestimate = np.zeros((nf,))
+
+for i in range(0, nt):
+    dke = integrate.trapz((integrate.trapz(uprime[i, :,:,:], x=z, axis=-1))/2, x=x, axis=0)
+#    dke = integrate.trapz((integrate.trapz(vprime[i, :,:,:], x=z, axis=-1))/2, x=x, axis=0)
+
+    tp[i,:] = np.abs(np.fft.fft(dke, n=nf))
+    tp[i,:] = tp[i,idx]
+
+#tp[tp==0] = 1e-10
+for j in range(0, nf):
+    grestimate[j] = np.polyfit(time[30:40],np.log(tp[20:30,j]),  1)[0]
+#%%
+plt.figure()
+plt.semilogx(freqs, grestimate[:])
+plt.semilogx(freqs, gri)
+#%%
+freqs = freqsalt
 grn = gr/a['f']
 psfn = psf
 plt.figure()
-plt.semilogx(freqs, psfn/np.max(psfn))
-plt.semilogx(freqs, gri/np.max(gri))
-##%%
-##stint = integrate.trapz(np.exp(2*gr[10:]), x=a['ll'][10:])
-#tn = 12
-#e1 = np.exp(np.max(gr)*2*time)/np.exp(np.max(gr)*2*time[tn])*eke[tn,0,0,0]
-#e2 = stint1/stint1[tn]*eke[tn,0,0,0]
-#e3 = stint/stint[tn]*eke[tn,0,0,0]
-##e3 = stint*60
-#fig, ax = plt.subplots(2,1,figsize = (8,8), sharex=True)
-##plt.figure(figsize=(5,4))
-#ax[0].semilogy(time/86400, eke[:,0,0,0], linewidth=3, label='EKE')
-##ax[0].semilogy(time/86400, eke1[:,0,0,0]/2)
-#
-##ax[0].semilogy(time/864001, e1)
-##ax[0].semilogy(time/86400, np.exp(np.max(gr)*1.65*time)*1e-11)
-#
-##ax[0].semilogy(time/86400, e2)
-#ax[0].semilogy(time/86400, e3, linestyle='dashed', linewidth=2, label='Linear theory')
-#ax[0].legend()
-#
-#wpbpi = integrate.trapz(wpbp[:,0,0,:], x=z, axis=-1)/z[-1]
-#spi = integrate.trapz(sp[:,0,0,:]+0*lsp[:,0,0,:]+msp[:,0,0,:], x=z, axis=-1)/z[-1]
-#dissi= integrate.trapz(diss[:,0,0,:]+hypv[:,0,0,:]+mfdiss[:,0,0,:], x=z, axis=-1)/z[-1]
-#sum = wpbpi + spi+dissi 
-#ax[1].plot(time/86400, eke[:,0,0,0], label='EKE', linewidth=3)
-#ax[1].plot(time[1:]/86400, integrate.cumtrapz(wpbpi, time), linewidth=2, label='VBP')
-#ax[1].plot(time[1:]/86400, integrate.cumtrapz(spi, time), linewidth=2, label='SP')
-#ax[1].plot(time[1:]/86400, integrate.cumtrapz(dissi, time), linewidth=2, label='DISS')
-#ax[1].plot(time[1:]/86400, integrate.cumtrapz(sum[:], time), label='SUM')
-#ax[1].set_yscale('symlog', linthreshy=1e-4)
-#ax[1].set_yticks([-1e0, -1e-4, 0, 1e-4, 1e-0])
-#ax[1].legend()
-##
-##ax[1].plot(time/86400, eket[:], label='eke')
-##ax[1].plot(time/86400, wpbpi)
-##ax[1].plot(time/86400, sp[:,0,0,0])
-##ax[1].plot(time/86400, diss[:,0,0,0])
-##ax[1].plot(time/86400, hypv[:,0,0,0])
-##ax[1].set_yscale('symlog', linthreshy=1e-12)
-#
-#
-#ax[0].grid()
-#ax[1].grid()
-#ax[1].set_xlabel('Days')
-#ax[0].set_title('Eddy kinetic energy')
-#ax[0].set_ylabel('m^2s^{-2}')
-#ax[0].set_ylim((1e-11, 1e1))
-#ax[0].set_xlim((0, 20))
-##ax[1].set_ylim((0,300))
-#ax[1].set_xlim((0,20))
-#
-#ax[1].set_title('Kinetic Energy Budget')
-#plt.tight_layout()
+plt.semilogx(freqs, freqs*psfn/np.max(psfn))
+plt.semilogx(freqs, freqs*np.abs(psfu**2 + psfv**2)/np.max(np.abs(psfu**2+psfv**2)), marker='x')
+plt.semilogx(freqs, freqs*np.abs(psfv)/np.max(np.abs(psfv)), marker='x')
 
+plt.semilogx(freqs, freqs*gri/np.max(gri), label='Linear')
+#plt.semilogx(a['ll']/(2*np.pi), gr)
+plt.axvline(x=6/(x[-1]))
+plt.legend()
+
+#%%
+ekealt = 0.5*integrate.trapz(integrate.trapz(integrate.trapz(uprime[:,:,:,:], x=z[:], axis=-1), x=x, axis=1)**2 + integrate.trapz(integrate.trapz( vprime[:,:,:,:], x=z[:], axis=-1), x=x, axis=1)**2, x=y, axis=1)
+#upb = integrate.trapz(integrate.trapz(integrate.trapz((uprime[:,:,:,:]), x=z[:], axis=-1), x=x, axis=1), x=y, axis=1)**2
+#vpb = integrate.trapz(integrate.trapz(integrate.trapz((vprime[:,:,:,:]), x=z[:], axis=-1), x=x, axis=1), x=y, axis=1)**2
+
+#ekealt = 0.5*(upb+vpb)
+
+#%%
+plt.figure()
+plt.semilogy(time/86400, eke[:,0,0,0])
+plt.semilogy(time/86400, ekealt/1000, linestyle='dashed')
 
 #%%
 #stint = integrate.trapz(np.exp(2*gr[10:]), x=a['ll'][10:])
-tn = 12
-e1 = np.exp(np.max(gr)*2*time)/np.exp(np.max(gr)*2*time[tn])*eke[tn,0,0,0]
-e2 = stint1/stint1[tn]*eke[tn,0,0,0]
-e3 = stint/stint[tn]*eke[tn,0,0,0]
-#e3 = stint
-#e3 = stint*60
+#tn = 12
+#e1 = np.exp(np.max(gr)*2*time)/np.exp(np.max(gr)*2*time[tn])*eke[tn,0,0,0]
+e1 = np.exp(np.max(gr)*2*1*(time-time[tn]))*eke[tn,0,0,0]
+e1 = np.exp( np.interp(5/x[-1], a['ll']/(2*np.pi), gr)*2*(time-time[tn]))*eke[tn,0,0,0]/20
+#e2 = np.exp( np.interp(6/32e3, a['ll']/(2*np.pi), gr)*2*(time-time[tn]))*eke[tn,0,0,0]/15
+
+e2 = stint1/stint1[tn]*eke[tn,0,0,0]/10
+e3 = stint/stint[tn]*eke[tn,0,0,0]*1
+
+#e3 = stint*eke[tn,0,0,0]
+#e3 = stint*time_step/nx
+e3 = stint*time_step/nx
 fig, ax = plt.subplots(2,1,figsize = (8,8), sharex=True)
 #plt.figure(figsize=(5,4))
 ax[0].semilogy(time/86400, eke[:,0,0,0], linewidth=3, label='EKE')
+#ax[0].semilogy(time[:]/86400, ekealt[:]/40000, linewidth=3, label='EKE')
+
+#ax[0].semilogy(time/86400, ekealt[:]/20000, linewidth=3, label='EKE')
+
 #ax[0].semilogy(time/86400, eked[:], linewidth=3, label='EKE')
 
 #ax[0].semilogy(time/86400, eke1[:,0,0,0]/2)
@@ -564,11 +628,11 @@ ax[0].semilogy(time/86400, eke[:,0,0,0], linewidth=3, label='EKE')
 #ax[0].semilogy(time/86400, e2)
 ax[0].semilogy(time/86400, e3, linestyle='dashed', linewidth=2, label='Linear theory')
 ax[0].legend()
-
+#ax[0].axvline(x=tn/4)
 wpbpi = integrate.trapz(wpbp[:,0,0,:], x=z, axis=-1)/z[-1]
 spi = integrate.trapz(sp[:,0,0,:], x=z, axis=-1)/z[-1]
 dissi= integrate.trapz(diss[:,0,0,0:]+hypv[:,0,0,0:], x=z[0:], axis=-1)/z[-1]
-
+#mdissi= integrate.trapz(mdiss[:,0,0,0:], x=z[0:], axis=-1)/z[-1]
 sum = wpbpi + spi + dissi
 ax[1].plot(time/86400, eket[:]/(x[-1]*y[-1]*z[-1]), label='EKE tendency', linewidth=3)
 #ax[1].plot(time/86400, eketo[:]/(x[-1]*y[-1]*z[-1]), label='EKE tendency', linewidth=3)
@@ -580,7 +644,7 @@ ax[1].plot(time[:]/86400,dissi, linewidth=2, label='Dissipation')
 
 #ax[1].plot(time[1:]/86400, integrate.cumtrapz(hypv[:,0,0,0], time))
 #ax[1].set_yscale('symlog', linthreshy=1e-4)
-ax[1].legend()
+ax[1].legend(loc=2)
 #
 #ax[1].plot(time/86400, eket[:], label='eke')
 #ax[1].plot(time/86400, wpbpi)
@@ -594,18 +658,19 @@ ax[0].grid()
 ax[1].grid()
 ax[1].set_xlabel('Days')
 #ax[0].set_title('Eddy kinetic energy')
-ax[0].set_ylabel('m$^5$ s$^{-2}$')
+ax[0].set_ylabel('m$^3$ m$^2$s$^{-2}$')
 ax[1].set_ylabel('m$^2$s$^{-3}$')
-ax[0].set_ylim((1e-2, 5e9))
+ax[0].set_ylim((1e-2, 1e10))
 ax[0].set_xlim((0, 20))
 #ax[1].set_ylim((0,300))
 ax[1].set_xlim((0,20))
-
+ax[1].set_ylim((-1e-9, 2e-9))
 #ax[1].set_title('Kinetic Energy Budget')
-#plt.tight_layout()
+plt.tight_layout()
 
 #fig.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/NLSim_Energetics.pdf', bbox_inches='tight')
 #fig.savefig('/home/jacob/Dropbox/Presentations/OS 2018 Slope Presentation/Working Files/Figures/NLSim_EKE.pdf', bbox_inches='tight')
+#fig.savefig('/home/jacob/Desktop/NLSim_Energetics2.pdf', bbox_inches='tight')
 
 ##%%
 #plt.figure()
@@ -614,7 +679,7 @@ ax[1].set_xlim((0,20))
 #%%
 #plt.plot(time/86400, np.max(wpbp[:,0,0,:], axis=-1))
 #%%
-t1 = 48
+t1 = tn
 plt.figure()
 plt.plot(wpbp[t1,0,0,:], z)
 plt.plot(sp[t1,0,0,:], z)

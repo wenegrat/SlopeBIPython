@@ -22,7 +22,7 @@ nll = 192
 nz = 256
 #nz = 128
 directoryname = "../GOTMEkmanCluster/"
-directoryname = "../GOTMEkmanD/" # Pick U or D
+directoryname = "../GOTMEkmanU/" # Pick U or D
 directory = os.fsencode(directoryname)
 plt.figure
 counter = 0
@@ -414,23 +414,25 @@ for c in a1.collections:
     c.set_edgecolor("face")
 cb = plt.colorbar()
 cb.set_ticks(np.linspace(cl[0], cl[-1], 6))
-#cb.set_label('$\\omega_i$', fontsize = 26)
-cb.set_label('$\\omega_i/f$', fontsize = 26)
+cb.set_label('$\\omega_i$', fontsize = 26)
+#cb.set_label('$\\omega_i/f$', fontsize = 26)
+cb.solids.set_edgecolor("face")
 
 plt.ylim((0, 30))
 CS = plt.contour(a['ll']/(2*np.pi), time*a['f']/(2*np.pi), grfi/a['f'],
             [0.025, 0.1, 0.15, 0.2],colors='0.5')
 plt.xlim((0, 0.00150))
 #plt.tick_params(axis='both', which='major', labelsize=fs)
-#mlocs = [(.003, 8), (.005, 10), (.003, 22),(0.007, 6)]
-mlocs = np.array([(.0008, 5), (0.0006, 8), (0.0007, 9),(0.0004, 20)])
-#mlocs = [(0.001/(2*np.pi), 10)] # For Upwelling case
+#mlocs = np.array([(.0008, 5), (0.0006, 8), (0.0007, 9),(0.0004, 20)]) # For downwwelling case
+mlocs = [(0.001/(2*np.pi), 10)] # For Upwelling case
 plt.clabel(CS, inline=1, fontsize = 10, fmt='%1.3f', manual = mlocs)
 plt.xlabel('Along slope wavenumber, $l$ $[m^{-1}]$', fontsize = 24)
 plt.ylabel('Time, ${tf}/{2\\pi}$', fontsize = 24)
 plt.grid(linestyle='--', alpha = 0.5)
 
-#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/EkmanStabilityDOWN.eps', format='eps', dpi=1000)
+#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/EkmanStabilityDOWN.pdf')
+#plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/Revision 1/EkmanStabilityUP.pdf')
+
 #plt.savefig('/home/jacob/Dropbox/Slope BI/Slope BI Manuscript/EkmanStabilityUP.eps', format='eps', dpi=1000)
 #plt.savefig('/home/jacob/Dropbox/Presentations/OS 2018 Slope Presentation/Working Files/Figures/EkmanStabilityDOWN.pdf', dpi=1000)
 
