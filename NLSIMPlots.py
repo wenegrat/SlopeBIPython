@@ -178,6 +178,7 @@ zhat = np.zeros((nx, nz))
 xhat = np.zeros((nx, nz))
 Bf = np.nan*np.zeros((nx,nz))
 clm = [0, 0.12]
+clm = [-0.01, 0.01]
 cmap = 'viridis'
 for i in range(0, nx):
     zhat[i,:] = (z + x[i]*np.tan(tht))
@@ -188,8 +189,9 @@ fig, ax = plt.subplots(2,1,sharex=False, figsize=(8,10))
 a0 = ax[0].contourf(xhat, zhat, (V[0,:,1,:]+0.1), np.linspace(0, clm[1], 13), cmap=cmap)
 ax[0].contour(xhat, zhat, Bf, 20, colors='0.5')
 ts = 78
-a1 = ax[1].pcolor(xhat, zhat, (V[ts,:,1,:]+0.1+ np.mean(v[ts,:,:,:],axis=1)), clim=clm, cmap=cmap, vmin=clm[0], vmax=clm[1])
-ax[1].contour(xhat, zhat, Bf + bplane[ts,:,0,:], 20, colors='0.5')
+ts = range(60, 79)
+a1 = ax[1].pcolor(xhat, zhat, np.mean(u[ts,:,1,:], axis=0), clim=clm, cmap=cmap, vmin=clm[0], vmax=clm[1])
+ax[1].contour(xhat, zhat, np.mean(Bf + bplane[ts,:,0,:], axis=0), 20, colors='0.5')
 plt.colorbar(a1,ax=ax[1], label='Along-slope velocity, m/s')
 plt.colorbar(a0, ax=ax[0], label='Along-slope velocity, m/s')
 ax[0].set_ylim((0, 500))

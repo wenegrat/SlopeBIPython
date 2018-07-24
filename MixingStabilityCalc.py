@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 # parameters
 N = 1e-3 # buoyancy frequency
-f = -2.5e-5 # Coriolis parameter
+f = -5.5e-5 # Coriolis parameter
 tht = 2e-3 # slope angle
 kap_0 = 1e-5 # background diffusivity
 kap_1 = 1e-3 # bottom enhancement of diffusivity
@@ -25,7 +25,7 @@ ll_global = np.logspace(-5, -2, 192)
 nz = 256
 
 # file name that results are saved in
-directory = '/data/thomas/jacob13/STABILITY/'
+directory = '/home/jacob/dedalus/UpdatedMixingStability/'
 
 # build domain
 z_basis = de.Chebyshev('z', nz, interval=(0, H))
