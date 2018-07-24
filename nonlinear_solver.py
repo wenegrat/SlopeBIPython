@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 #OD = False
 
 
+
 nx = 64
 ny = 64
 Lx, Ly, Lz = (nx*1e3/2,ny*1e3/2, 1000.)
@@ -138,7 +139,7 @@ problem.add_equation('dt(v) + f*u*cos(tht) + dy(p) - D(v,vz) - HV(v)  + VIb*dy(v
 problem.add_equation('dz(p) - b*cos(tht) = 0')
 #problem.add_equation('dt(w) + dz(p) - b*cos(tht) -D(w, wz) - HV(w) = -NL(w, wz) - VI*dy(w)')
 
-problem.add_equation('dt(b) + u*N**2*sin(tht) + w*N**2*cos(tht) - D(b,bz) - HV(b) +VIb*dy(b) = -NL(b,bz) - VI*dy(b) - w*BZI +D(0, BZI+N**2*cos(tht))')
+problem.add_equation('dt(b) + u*N**2*sin(tht) + w*N**2*cos(tht) - D(b,bz) - HV(b) +VIb*dy(b) = -NL(b,bz) - VI*dy(b) - w*BZI + D(0, BZI+N**2*cos(tht))')
 
 problem.add_equation('dx(u) + dy(v) + wz = 0')
 
@@ -188,6 +189,7 @@ rand = np.random.RandomState(seed=23)
 noise = rand.standard_normal(gshape)[slices]
 
 b['g'] += nx*1e-10*noise
+#u['g'] += nx*1e-10*noise
 
 # Calculate Derivatives
 b.differentiate('z', out=bz)
